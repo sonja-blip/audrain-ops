@@ -1,0 +1,1517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audrain Advising — Operations Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --purple:#5B4FCF;--pl:#EEF0FF;--pm:#8B82E0;--pd:#3D3491;
+  --teal:#0EA882;--tl:#E0F7F2;
+  --amber:#E8920C;--al:#FEF3E0;
+  --red:#DC3545;--rl:#FDEAEC;
+  --blue:#1B6FD8;--bl:#E8F0FC;
+  --green:#2E8B57;--gl:#E8F5EE;
+  --g50:#F9F9FB;--g100:#F2F2F6;--g200:#E4E4EC;--g300:#C8C8D8;--g400:#9898B0;--g600:#5A5A72;--g900:#18182A;
+  --bg:#FAFAFA;--sf:#FFF;--tx:#18182A;--tm:#5A5A72;--ts:#9898B0;
+  --br:#E4E4EC;--brh:#C8C8D8;
+  --r:10px;--rs:6px;--rl2:14px;
+  --ss:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --sm:0 4px 12px rgba(0,0,0,.08),0 1px 3px rgba(0,0,0,.05);
+  --sl:0 8px 32px rgba(0,0,0,.12),0 2px 8px rgba(0,0,0,.06);
+  --font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--tx);font-size:14px;line-height:1.5;overflow:hidden;height:100vh}
+button,input,select,textarea{font-family:var(--font)}
+a{color:inherit;text-decoration:none}
+
+/* ── App shell ── */
+.shell{display:grid;grid-template-columns:228px 1fr;grid-template-rows:56px 1fr;height:100vh}
+
+/* ── Topbar ── */
+.topbar{grid-column:1/-1;background:var(--sf);border-bottom:1px solid var(--br);display:flex;align-items:center;padding:0 24px;gap:14px;z-index:50}
+.logo-mark{width:32px;height:32px;background:var(--purple);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;letter-spacing:-.5px;flex-shrink:0}
+.logo-text{font-size:15px;font-weight:600;letter-spacing:-.3px}.logo-text span{color:var(--purple)}
+.tb-div{width:1px;height:20px;background:var(--br)}
+.tb-sub{font-size:12px;color:var(--ts)}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.notif-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--br);background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;position:relative}
+.notif-btn:hover{background:var(--g100)}
+.notif-dot{position:absolute;top:5px;right:5px;width:8px;height:8px;background:var(--red);border-radius:50%;border:2px solid #fff}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--pl);color:var(--purple);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;cursor:pointer}
+
+/* ── Sidebar ── */
+.sidebar{background:var(--sf);border-right:1px solid var(--br);padding:14px 10px;overflow-y:auto}
+.sb-sec{margin-bottom:18px}
+.sb-lbl{font-size:10px;font-weight:600;color:var(--ts);text-transform:uppercase;letter-spacing:.08em;padding:0 8px 5px}
+.nav{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--rs);cursor:pointer;font-size:13px;color:var(--tm);border:none;background:transparent;width:100%;text-align:left;transition:all .12s}
+.nav:hover{background:var(--g100);color:var(--tx)}
+.nav.active{background:var(--pl);color:var(--purple);font-weight:500}
+.nav-ic{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.nb{margin-left:auto;font-size:10px;font-weight:600;padding:1px 6px;border-radius:99px;background:var(--g100);color:var(--ts)}
+.nb.hot{background:var(--pl);color:var(--purple)}
+
+/* ── Main ── */
+.main{overflow-y:auto;padding:26px 30px}
+.page{display:none}
+.page.active{display:block;animation:fi .18s ease}
+@keyframes fi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── Page header ── */
+.ph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px}
+.pt{font-size:21px;font-weight:600;letter-spacing:-.5px}
+.pst{font-size:12px;color:var(--tm);margin-top:2px}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--rs);font-size:13px;font-weight:500;border:1px solid var(--br);background:var(--sf);color:var(--tx);cursor:pointer;transition:all .12s;white-space:nowrap}
+.btn:hover{background:var(--g100);border-color:var(--brh)}
+.btn.p{background:var(--purple);color:#fff;border-color:var(--purple)}
+.btn.p:hover{background:var(--pd)}
+.btn.s{background:var(--teal);color:#fff;border-color:var(--teal)}
+.btn.s:hover{background:#0a8f6e}
+.btn.sm{padding:5px 11px;font-size:12px}
+.btn.xs{padding:3px 7px;font-size:11px}
+
+/* ── Cards ── */
+.card{background:var(--sf);border:1px solid var(--br);border-radius:var(--rl2);padding:18px;box-shadow:var(--ss)}
+.card.click{cursor:pointer;transition:all .15s}
+.card.click:hover{box-shadow:var(--sm);border-color:var(--brh)}
+
+/* ── Stats ── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.stat{background:var(--sf);border:1px solid var(--br);border-radius:var(--r);padding:16px 18px;box-shadow:var(--ss)}
+.sl{font-size:11px;color:var(--tm);margin-bottom:5px;font-weight:500}
+.sv{font-size:26px;font-weight:600;letter-spacing:-1px;line-height:1;margin-bottom:3px}
+.ss2{font-size:11px;color:var(--ts)}
+.stat.acc{background:var(--purple);border-color:var(--purple)}
+.stat.acc .sl{color:rgba(255,255,255,.7)}
+.stat.acc .sv{color:#fff}
+.stat.acc .ss2{color:rgba(255,255,255,.6)}
+
+/* ── Badges ── */
+.b{display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:500;white-space:nowrap}
+.b.fo{background:var(--pl);color:var(--purple)}
+.b.co{background:var(--tl);color:#0a7a5f}
+.b.ch{background:var(--al);color:#b56d06}
+.b.todo{background:var(--al);color:#b56d06}
+.b.inprog{background:var(--bl);color:var(--blue)}
+.b.done{background:var(--gl);color:var(--green)}
+.b.overdue{background:var(--rl);color:var(--red)}
+.b.readai{background:var(--pl);color:var(--purple)}
+.b.cal{background:var(--bl);color:var(--blue)}
+.b.n{background:var(--g100);color:var(--tm)}
+.b.email{background:var(--bl);color:var(--blue)}
+.b.drive{background:var(--gl);color:var(--green)}
+
+/* ── Welcome banner ── */
+.welcome{background:linear-gradient(135deg,var(--purple) 0%,var(--pd) 100%);border-radius:var(--rl2);padding:22px 26px;margin-bottom:22px;color:#fff;display:flex;align-items:center;justify-content:space-between}
+.wt{font-size:17px;font-weight:600;letter-spacing:-.3px;margin-bottom:3px}
+.ws{font-size:12px;opacity:.75}
+.wd{font-size:12px;opacity:.65;font-family:var(--mono)}
+
+/* ── Two col ── */
+.tc{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.st{font-size:13px;font-weight:600;margin-bottom:10px}
+
+/* ── Task list ── */
+.tlist{display:flex;flex-direction:column;gap:5px}
+.ti{display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--sf);border:1px solid var(--br);border-radius:var(--r);box-shadow:var(--ss);transition:border-color .1s}
+.ti:hover{border-color:var(--brh)}
+.tchk{width:17px;height:17px;border-radius:5px;border:2px solid var(--g300);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;font-size:10px;color:#fff}
+.tchk:hover{border-color:var(--purple)}
+.tchk.chk{background:var(--purple);border-color:var(--purple)}
+.pip{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.pip.high{background:var(--red)}
+.pip.med{background:var(--amber)}
+.pip.low{background:var(--teal)}
+.tb2{flex:1;min-width:0}
+.tt{font-size:13px;font-weight:500;margin-bottom:3px}
+.tt.done{text-decoration:line-through;color:var(--ts)}
+.tm2{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.tdue{font-size:11px;color:var(--ts)}
+.tdue.od{color:var(--red);font-weight:500}
+
+/* ── Activity ── */
+.afeed{display:flex;flex-direction:column;gap:7px}
+.aitem{display:flex;gap:10px;padding:11px 13px;background:var(--sf);border:1px solid var(--br);border-radius:var(--r);box-shadow:var(--ss)}
+.aic{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.aic.email{background:var(--bl);color:var(--blue)}
+.aic.task{background:var(--gl);color:var(--green)}
+.aic.meeting{background:var(--al);color:var(--amber)}
+.aic.note{background:var(--pl);color:var(--purple)}
+.aic.cal{background:var(--bl);color:var(--blue)}
+.aic.time{background:var(--tl);color:var(--teal)}
+.ab{flex:1;min-width:0}
+.at{font-size:13px;font-weight:500;margin-bottom:1px}
+.as{font-size:12px;color:var(--tm)}
+.ati{font-size:11px;color:var(--ts);flex-shrink:0;white-space:nowrap;padding-top:1px}
+
+/* ── Tabs ── */
+.tabs{display:flex;border-bottom:1px solid var(--br);margin-bottom:18px}
+.tab{padding:8px 14px;cursor:pointer;font-size:13px;color:var(--tm);border-bottom:2px solid transparent;border-top:none;border-left:none;border-right:none;background:none;font-family:var(--font);transition:all .12s}
+.tab:hover:not(.active){color:var(--tx)}
+.tab.active{color:var(--purple);border-bottom-color:var(--purple);font-weight:500}
+
+/* ── Clients ── */
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:14px}
+.cinit{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;margin-bottom:12px}
+.cname{font-size:15px;font-weight:600;margin-bottom:2px;letter-spacing:-.2px}
+.cdom{font-size:12px;color:var(--tm);margin-bottom:8px;font-family:var(--mono)}
+.cfoot{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--br)}
+
+/* ── Email rows ── */
+.erow{display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border-bottom:1px solid var(--br);cursor:pointer;transition:background .1s}
+.erow:last-child{border-bottom:none}
+.erow:hover{background:var(--g50)}
+.erow.unread .esubj{font-weight:600}
+.edot{width:7px;height:7px;background:var(--purple);border-radius:50%;flex-shrink:0;margin-top:5px}
+.edot.read{background:transparent}
+.efrom{font-size:13px;font-weight:500;width:155px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ebody{flex:1;min-width:0}
+.esubj{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+.eprev{font-size:11px;color:var(--ts);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.edate{font-size:11px;color:var(--ts);flex-shrink:0;padding-top:1px}
+
+/* ── Drive rows ── */
+.drow{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--br);cursor:pointer;transition:background .1s}
+.drow:last-child{border-bottom:none}
+.drow:hover{background:var(--g50)}
+.dic{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.dic.doc{background:var(--bl)}
+.dic.sheet{background:var(--gl)}
+.dic.pdf{background:var(--rl)}
+.dic.folder{background:var(--al)}
+.dname{font-size:13px;font-weight:500;flex:1}
+.ddate{font-size:11px;color:var(--ts)}
+
+/* ── Meeting rows ── */
+.mrow{display:flex;align-items:center;gap:12px;padding:13px 15px;background:var(--sf);border:1px solid var(--br);border-radius:var(--r);margin-bottom:7px;box-shadow:var(--ss)}
+.minit{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.minfo{flex:1;min-width:0}
+.mname{font-size:14px;font-weight:600;margin-bottom:2px}
+.mmeta{font-size:12px;color:var(--tm)}
+
+/* ── AI panel ── */
+.aipanel{background:#F4F3FF;border:1px solid #D0CEFF;border-radius:var(--r);padding:14px;margin-bottom:12px}
+.ailbl{font-size:10px;font-weight:600;color:var(--purple);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.agrow{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid #D0CEFF}
+.agrow:last-child{border-bottom:none}
+.agcb{accent-color:var(--purple);width:13px;height:13px;flex-shrink:0;margin-top:2px;cursor:pointer}
+.agtx{font-size:12px;color:#3D3491;flex:1;line-height:1.4}
+.agtm{font-size:11px;color:var(--pm);flex-shrink:0;font-family:var(--mono)}
+
+/* ── Workflow grid ── */
+.wfgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.wfstep{background:var(--sf);border:1px solid var(--br);border-radius:var(--rl2);padding:16px;box-shadow:var(--ss)}
+.wfstep.hl{border-color:var(--pm);border-width:1.5px}
+.wfbadge{display:inline-flex;background:var(--pl);color:var(--purple);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;padding:2px 8px;border-radius:99px;margin-bottom:8px}
+.wftitle{font-size:14px;font-weight:600;margin-bottom:4px;letter-spacing:-.2px}
+.wfdesc{font-size:12px;color:var(--tm);line-height:1.5;margin-bottom:10px}
+
+/* ── Calendar events ── */
+.calrow{display:flex;align-items:center;gap:12px;padding:12px 15px;background:var(--sf);border:1px solid var(--br);border-radius:var(--r);margin-bottom:7px;box-shadow:var(--ss)}
+.calbullet{width:4px;border-radius:4px;align-self:stretch;flex-shrink:0}
+.calinfo{flex:1;min-width:0}
+.caltitle{font-size:13px;font-weight:600;margin-bottom:2px}
+.calmeta{font-size:12px;color:var(--tm)}
+.cal-alert{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;background:#FFF8E7;border:1px solid #F5D78E;border-radius:var(--r);margin-bottom:10px}
+.cal-alert.ready{background:#F0FDF4;border-color:#86EFAC}
+
+/* ── Time tracker ── */
+.timer-display{font-family:var(--mono);font-size:40px;font-weight:500;letter-spacing:2px;color:var(--purple);text-align:center;padding:20px 0 10px}
+.timer-display.running{color:var(--teal)}
+.timer-card{background:var(--sf);border:2px solid var(--br);border-radius:var(--rl2);padding:22px;text-align:center;margin-bottom:20px;box-shadow:var(--ss)}
+.timer-card.running{border-color:var(--teal)}
+.time-entries{display:flex;flex-direction:column;gap:5px}
+.te-row{display:flex;align-items:center;gap:10px;padding:10px 13px;background:var(--sf);border:1px solid var(--br);border-radius:var(--r);box-shadow:var(--ss)}
+.te-client{font-size:12px;font-weight:600;width:160px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.te-task{font-size:13px;flex:1;color:var(--tx)}
+.te-dur{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--purple);flex-shrink:0;min-width:60px;text-align:right}
+.te-date{font-size:11px;color:var(--ts);flex-shrink:0;min-width:70px;text-align:right}
+.monthly-summary{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:22px}
+.ms-card{background:var(--sf);border:1px solid var(--br);border-radius:var(--r);padding:14px;box-shadow:var(--ss)}
+.ms-client{font-size:12px;font-weight:600;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ms-hours{font-size:22px;font-weight:600;letter-spacing:-.5px;color:var(--purple);font-family:var(--mono)}
+.ms-sub{font-size:11px;color:var(--ts);margin-top:2px}
+
+/* ── Forms ── */
+.frow{margin-bottom:14px}
+.flbl{display:block;font-size:12px;font-weight:500;color:var(--tm);margin-bottom:5px}
+.finput,.fsel,.ftarea{width:100%;height:36px;border:1px solid var(--br);border-radius:var(--rs);padding:0 11px;font-size:13px;font-family:var(--font);color:var(--tx);background:var(--sf);transition:border-color .12s}
+.finput:focus,.fsel:focus,.ftarea:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 3px rgba(91,79,207,.1)}
+.ftarea{height:auto;min-height:90px;padding:9px 11px;resize:vertical;line-height:1.5}
+.frow-in{display:flex;gap:10px;margin-bottom:14px}
+.frow-in>*{flex:1}
+.search-in{flex:1;min-width:180px;max-width:300px;height:34px;border:1px solid var(--br);border-radius:var(--rs);padding:0 11px 0 33px;font-size:13px;font-family:var(--font);background:var(--sf) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='%239898B0' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 10px center}
+.search-in:focus{outline:none;border-color:var(--purple)}
+.fsel-sm{height:34px;border:1px solid var(--br);border-radius:var(--rs);padding:0 9px;font-size:13px;font-family:var(--font);background:var(--sf);color:var(--tx);cursor:pointer;min-width:150px}
+.fsel-sm:focus{outline:none;border-color:var(--purple)}
+
+/* ── Modals ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(24,24,42,.4);backdrop-filter:blur(2px);z-index:200;align-items:center;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:var(--sf);border-radius:var(--rl2);padding:26px;width:500px;max-width:94vw;max-height:88vh;overflow-y:auto;box-shadow:var(--sl);border:1px solid var(--br)}
+.modal.lg{width:620px}
+.mhdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.mtitle{font-size:15px;font-weight:600;letter-spacing:-.3px}
+.mclose{width:28px;height:28px;border-radius:50%;border:1px solid var(--br);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--tm);line-height:1}
+.mclose:hover{background:var(--g100)}
+
+/* ── Hints ── */
+.hint{border-radius:var(--rs);padding:9px 13px;font-size:12px;margin-bottom:12px;display:flex;align-items:flex-start;gap:8px;line-height:1.5}
+.hint.info{background:var(--bl);border:1px solid #C5D9F5;color:#1558B8}
+.hint.ok{background:var(--gl);border:1px solid #A8D5BB;color:#246840}
+.hint.warn{background:var(--al);border:1px solid #F7D08A;color:#8B5B00}
+.hint.purple{background:var(--pl);border:1px solid #D0CEFF;color:var(--pd)}
+
+/* ── List containers ── */
+.lc{background:var(--sf);border:1px solid var(--br);border-radius:var(--rl2);overflow:hidden;box-shadow:var(--ss)}
+
+/* ── Misc ── */
+.divider{height:1px;background:var(--br);margin:20px 0}
+.empty{text-align:center;padding:36px 20px;color:var(--ts);font-size:13px}
+.back-btn{display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--purple);font-weight:500;cursor:pointer;background:none;border:none;margin-bottom:14px;font-family:var(--font)}
+.back-btn:hover{text-decoration:underline}
+.cdh{display:flex;align-items:center;gap:14px;margin-bottom:20px;padding-bottom:18px;border-top:0;border-bottom:1px solid var(--br)}
+.cdinit{width:50px;height:50px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0}
+.cdname{font-size:19px;font-weight:700;letter-spacing:-.4px;margin-bottom:2px}
+.cdmeta{font-size:13px;color:var(--tm)}
+.tlink{display:inline-flex;align-items:center;gap:6px;background:var(--bl);border:1px solid #C5D9F5;border-radius:var(--rs);padding:6px 11px;font-size:12px;color:var(--blue);font-weight:500;cursor:pointer}
+.tlink:hover{background:#D8E9FA}
+.spinner{display:inline-block;width:13px;height:13px;border:2px solid var(--pl);border-top-color:var(--purple);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.note-card{background:var(--g50);border:1px solid var(--br);border-radius:var(--r);padding:13px;margin-bottom:8px}
+.note-tx{font-size:13px;line-height:1.6;margin-bottom:6px}
+.note-meta{font-size:11px;color:var(--ts);font-family:var(--mono)}
+.filter-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="logo-mark">AA</div>
+  <div class="logo-text"><span>Audrain</span> Advising</div>
+  <div class="tb-div"></div>
+  <span class="tb-sub">Operations Platform</span>
+  <div class="tb-right">
+    <button class="notif-btn">🔔<span class="notif-dot"></span></button>
+    <div class="avatar">AA</div>
+  </div>
+</header>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sb-sec">
+    <div class="sb-lbl">Workspace</div>
+    <button class="nav active" onclick="nav('dashboard',this)"><span class="nav-ic">🏠</span>Dashboard</button>
+    <button class="nav" onclick="nav('clients',this)"><span class="nav-ic">🏢</span>Clients<span class="nb" id="nb-clients">5</span></button>
+  </div>
+  <div class="sb-sec">
+    <div class="sb-lbl">Work</div>
+    <button class="nav" onclick="nav('tasks',this)"><span class="nav-ic">✅</span>Tasks<span class="nb hot" id="nb-tasks">7</span></button>
+    <button class="nav" onclick="nav('meetings',this)"><span class="nav-ic">📅</span>Meetings<span class="nb" id="nb-meetings">2</span></button>
+    <button class="nav" onclick="nav('time',this)"><span class="nav-ic">⏱️</span>Time Tracker</button>
+  </div>
+  <div class="sb-sec">
+    <div class="sb-lbl">Integrations</div>
+    <button class="nav" onclick="nav('gmail',this)"><span class="nav-ic">✉️</span>Gmail<span class="nb hot" id="nb-gmail">4</span></button>
+    <button class="nav" onclick="nav('drive',this)"><span class="nav-ic">📁</span>Drive</button>
+    <button class="nav" onclick="nav('calendar',this)"><span class="nav-ic">🗓️</span>Calendar<span class="nb hot" id="nb-cal">2</span></button>
+    <button class="nav" onclick="nav('readai',this)"><span class="nav-ic">🎙️</span>Read.ai</button>
+  </div>
+  <div class="sb-sec">
+    <div class="sb-lbl">Admin</div>
+    <button class="nav" onclick="nav('settings',this)"><span class="nav-ic">⚙️</span>Settings</button>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- ══════════════ DASHBOARD ══════════════ -->
+<section class="page active" id="page-dashboard">
+  <div class="welcome">
+    <div><div class="wt">Good morning — here's your day</div><div class="ws">Audrain Advising · Operations Platform</div></div>
+    <div class="wd" id="dash-date"></div>
+  </div>
+  <!-- Calendar auto-agenda alerts -->
+  <div id="dash-cal-alerts"></div>
+  <div class="stats">
+    <div class="stat acc"><div class="sl">Active clients</div><div class="sv">5</div><div class="ss2">2 meetings this week</div></div>
+    <div class="stat"><div class="sl">Open tasks</div><div class="sv" id="dash-task-ct">7</div><div class="ss2">2 overdue</div></div>
+    <div class="stat"><div class="sl">Unread emails</div><div class="sv">4</div><div class="ss2">Across 3 clients</div></div>
+    <div class="stat"><div class="sl">Hours this month</div><div class="sv" id="dash-hrs">0h</div><div class="ss2">Across all clients</div></div>
+  </div>
+  <div class="tc">
+    <div><div class="st">My open tasks</div><div class="tlist" id="dash-tasks"></div><div style="margin-top:10px"><button class="btn sm" onclick="nav('tasks',null)">View all tasks →</button></div></div>
+    <div><div class="st">Recent activity</div><div class="afeed" id="dash-activity"></div></div>
+  </div>
+</section>
+
+<!-- ══════════════ CLIENTS ══════════════ -->
+<section class="page" id="page-clients">
+  <div class="ph"><div><div class="pt">Clients</div><div class="pst">5 active client engagements</div></div><button class="btn p" onclick="openM('addClient')">+ Add client</button></div>
+  <div class="cgrid" id="clients-grid"></div>
+</section>
+
+<!-- ══════════════ CLIENT DETAIL ══════════════ -->
+<section class="page" id="page-clientDetail">
+  <button class="back-btn" onclick="nav('clients',null)">← Back to clients</button>
+  <div class="cdh" id="cd-header"></div>
+  <div class="tabs" id="cd-tabs">
+    <button class="tab active" onclick="cdTab(this,'cd-overview')">Overview</button>
+    <button class="tab" onclick="cdTab(this,'cd-emails')">Emails</button>
+    <button class="tab" onclick="cdTab(this,'cd-drive')">Drive</button>
+    <button class="tab" onclick="cdTab(this,'cd-tasks')">Tasks</button>
+    <button class="tab" onclick="cdTab(this,'cd-notes')">Notes</button>
+    <button class="tab" onclick="cdTab(this,'cd-time')">Time</button>
+  </div>
+  <div id="cd-overview"></div>
+  <div id="cd-emails" style="display:none"></div>
+  <div id="cd-drive" style="display:none"></div>
+  <div id="cd-tasks" style="display:none"></div>
+  <div id="cd-notes" style="display:none"></div>
+  <div id="cd-time" style="display:none"></div>
+</section>
+
+<!-- ══════════════ TASKS ══════════════ -->
+<section class="page" id="page-tasks">
+  <div class="ph"><div><div class="pt">Tasks</div><div class="pst">All client and internal work</div></div><button class="btn p" onclick="openM('addTask')">+ Add task</button></div>
+  <div class="tabs">
+    <button class="tab active" onclick="filterTasks(this,'all')">All open</button>
+    <button class="tab" onclick="filterTasks(this,'mine')">Mine</button>
+    <button class="tab" onclick="filterTasks(this,'overdue')">Overdue</button>
+    <button class="tab" onclick="filterTasks(this,'done')">Done</button>
+  </div>
+  <div class="tlist" id="main-task-list"></div>
+</section>
+
+<!-- ══════════════ MEETINGS ══════════════ -->
+<section class="page" id="page-meetings">
+  <div class="ph"><div><div class="pt">Meetings</div><div class="pst">AI-powered prep and follow-up workflow</div></div><button class="btn p" onclick="openM('newMeeting')">+ Schedule meeting</button></div>
+  <div class="st">Upcoming meetings</div>
+  <div id="meetings-list" style="margin-bottom:22px"></div>
+  <div class="divider"></div>
+  <div class="st" style="margin-bottom:16px">AI meeting workflow</div>
+  <div id="meeting-workflow"></div>
+</section>
+
+<!-- ══════════════ TIME TRACKER ══════════════ -->
+<section class="page" id="page-time">
+  <div class="ph"><div><div class="pt">Time Tracker</div><div class="pst">Track hours by client — start/stop timer with project or task name</div></div></div>
+
+  <!-- Active timer -->
+  <div class="timer-card" id="timer-card">
+    <div class="timer-display" id="timer-display">00:00:00</div>
+    <div style="display:flex;gap:10px;justify-content:center;margin-bottom:16px;flex-wrap:wrap">
+      <select class="fsel-sm" id="timer-client" style="min-width:190px">
+        <option value="">Select client...</option>
+      </select>
+      <input class="finput" id="timer-task" placeholder="Project or task name..." style="max-width:260px;height:34px">
+    </div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button class="btn p" id="timer-btn" onclick="toggleTimer()">▶ Start timer</button>
+      <button class="btn sm" onclick="discardTimer()" id="timer-discard" style="display:none">✕ Discard</button>
+    </div>
+  </div>
+
+  <!-- Monthly summary -->
+  <div class="st">This month — <span id="month-label"></span></div>
+  <div class="monthly-summary" id="monthly-summary"></div>
+
+  <!-- Filter bar -->
+  <div class="filter-bar">
+    <div class="st" style="margin-bottom:0">Time entries</div>
+    <select class="fsel-sm" id="te-client-filter" onchange="renderTimeEntries()" style="margin-left:auto">
+      <option value="">All clients</option>
+    </select>
+    <select class="fsel-sm" id="te-month-filter" onchange="renderTimeEntries()">
+    </select>
+  </div>
+  <div class="lc">
+    <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--g50);border-bottom:1px solid var(--br)">
+      <span style="font-size:11px;font-weight:600;color:var(--ts);text-transform:uppercase;letter-spacing:.06em;width:160px">Client</span>
+      <span style="font-size:11px;font-weight:600;color:var(--ts);text-transform:uppercase;letter-spacing:.06em;flex:1">Project / task</span>
+      <span style="font-size:11px;font-weight:600;color:var(--ts);text-transform:uppercase;letter-spacing:.06em;min-width:60px;text-align:right">Duration</span>
+      <span style="font-size:11px;font-weight:600;color:var(--ts);text-transform:uppercase;letter-spacing:.06em;min-width:80px;text-align:right">Date</span>
+      <span style="width:32px"></span>
+    </div>
+    <div id="time-entries-list"></div>
+  </div>
+</section>
+
+<!-- ══════════════ GMAIL ══════════════ -->
+<section class="page" id="page-gmail">
+  <div class="ph"><div><div class="pt">Gmail</div><div class="pst">Client emails auto-linked by domain</div></div></div>
+  <div class="filter-bar">
+    <input type="text" class="search-in" id="gmail-search" placeholder="Search emails..." oninput="filterEmails()">
+    <select class="fsel-sm" id="gmail-cf" onchange="filterEmails()"><option value="">All clients</option></select>
+  </div>
+  <div class="lc"><div id="gmail-list"></div></div>
+</section>
+
+<!-- ══════════════ DRIVE ══════════════ -->
+<section class="page" id="page-drive">
+  <div class="ph">
+    <div><div class="pt">Google Drive</div><div class="pst">Client documents and templates</div></div>
+    <a class="tlink" href="https://docs.google.com/document/d/1-2AfdYwvpt7lPWO-gR6JKL85Ezvgyh-ZgWipdunzjPI/edit" target="_blank">📄 Agenda template ↗</a>
+  </div>
+  <div class="filter-bar">
+    <select class="fsel-sm" id="drive-cf" onchange="filterDrive()"><option value="">All clients</option></select>
+  </div>
+  <div class="lc"><div id="drive-list"></div></div>
+</section>
+
+<!-- ══════════════ CALENDAR ══════════════ -->
+<section class="page" id="page-calendar">
+  <div class="ph">
+    <div><div class="pt">Google Calendar</div><div class="pst">Upcoming client meetings — agenda auto-generated 2 days before</div></div>
+    <button class="btn sm" onclick="syncCal()">🔄 Sync now</button>
+  </div>
+
+  <div class="hint purple" style="margin-bottom:18px">
+    <span style="font-size:18px">🤖</span>
+    <div><strong>Auto-agenda workflow:</strong> When a client check-in appears in your Google Calendar, this platform detects it <strong>2 days before</strong> and automatically reads your last meeting notes and recent emails to generate suggested agenda items. You'll see an alert on your dashboard so nothing slips through.</div>
+  </div>
+
+  <div id="cal-alerts" style="margin-bottom:18px"></div>
+
+  <div class="tc" style="margin-bottom:22px">
+    <div>
+      <div class="st">Upcoming client meetings</div>
+      <div id="cal-upcoming"></div>
+    </div>
+    <div>
+      <div class="st">Auto-agenda queue</div>
+      <div id="cal-queue"></div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <div class="st" style="margin-bottom:6px">How calendar matching works</div>
+  <div style="font-size:13px;color:var(--tm);line-height:1.7;margin-bottom:14px">Events are matched to clients by scanning the event title and attendee email domains against your client list. You can also manually link any event below.</div>
+  <div class="lc"><div id="cal-all"></div></div>
+</section>
+
+<!-- ══════════════ READ.AI ══════════════ -->
+<section class="page" id="page-readai">
+  <div class="ph"><div><div class="pt">Read.ai</div><div class="pst">Pull full transcripts — not just email summaries</div></div></div>
+
+  <div class="hint info" style="margin-bottom:18px">
+    <span>ℹ️</span>
+    <div>The email you receive after a meeting only contains a <strong>summary</strong>. This integration pulls the <strong>full word-for-word transcript</strong> from the Read.ai API so Claude can generate accurate meeting notes and tasks. Connect your API key below to enable one-click transcript fetching.</div>
+  </div>
+
+  <!-- API key setup -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="st" style="margin-bottom:6px">Read.ai API connection</div>
+    <div style="font-size:13px;color:var(--tm);margin-bottom:12px;line-height:1.6">Your API key is found in Read.ai Settings → Integrations → API Keys. Once connected, you can fetch the full transcript for any recent meeting with one click.</div>
+    <div id="readai-status"></div>
+    <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+      <div style="flex:1;min-width:220px">
+        <label class="flbl">Read.ai API key</label>
+        <input class="finput" id="readai-key" type="password" placeholder="sk_live_..." style="font-family:var(--mono)">
+      </div>
+      <button class="btn p sm" onclick="saveReadAIKey()">Connect</button>
+    </div>
+  </div>
+
+  <!-- Recent meetings from Read.ai -->
+  <div class="st" style="margin-bottom:12px">Recent meetings (from Read.ai)</div>
+  <div id="readai-meetings-list">
+    <div class="hint warn">Connect your API key above to see your recent Read.ai meetings and fetch full transcripts.</div>
+  </div>
+
+  <div class="divider"></div>
+  <div class="st" style="margin-bottom:8px">Manual transcript processing</div>
+  <div style="font-size:13px;color:var(--tm);margin-bottom:12px;line-height:1.6">If you prefer, you can always download the full transcript from your <a href="https://app.read.ai" target="_blank" style="color:var(--blue)">Read.ai dashboard</a> and paste it here. Go to any meeting → Transcript tab → Download.</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button class="btn p sm" onclick="openM('transcript')">📋 Paste & process transcript</button>
+    <button class="btn sm" onclick="openM('transcript')">View processing history</button>
+  </div>
+</section>
+
+<!-- ══════════════ SETTINGS ══════════════ -->
+<section class="page" id="page-settings">
+  <div class="ph"><div class="pt">Settings</div></div>
+  <div class="tc">
+    <div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="st" style="margin-bottom:12px">Team members</div>
+        <div id="team-list" style="display:flex;flex-direction:column;gap:10px"></div>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--br)"><button class="btn sm">+ Invite team member</button></div>
+      </div>
+      <div class="card">
+        <div class="st" style="margin-bottom:12px">Integrations status</div>
+        <div id="integ-list" style="display:flex;flex-direction:column;gap:12px"></div>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="st" style="margin-bottom:6px">Agenda template</div>
+        <div style="font-size:13px;color:var(--tm);margin-bottom:10px;line-height:1.6">Connected Google Doc template used for all meeting agendas.</div>
+        <div class="hint ok" style="margin-bottom:10px">✓ Template connected</div>
+        <a class="tlink" href="https://docs.google.com/document/d/1-2AfdYwvpt7lPWO-gR6JKL85Ezvgyh-ZgWipdunzjPI/edit" target="_blank" style="display:inline-flex;margin-bottom:10px">📄 View / edit template ↗</a>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="st" style="margin-bottom:10px">Calendar auto-agenda settings</div>
+        <div style="display:flex;flex-direction:column;gap:11px;font-size:13px">
+          <label style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <span>Days before meeting to trigger</span>
+            <select class="fsel-sm" style="width:75px;height:30px;font-size:12px;min-width:0"><option>1 day</option><option selected>2 days</option><option>3 days</option></select>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" checked style="accent-color:var(--purple)"> Show alert on dashboard</label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" checked style="accent-color:var(--purple)"> Auto-generate agenda suggestions</label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" style="accent-color:var(--purple)"> Email agenda to team before meeting</label>
+        </div>
+      </div>
+      <div class="card">
+        <div class="st" style="margin-bottom:10px">Notifications</div>
+        <div style="display:flex;flex-direction:column;gap:9px;font-size:13px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" checked style="accent-color:var(--purple)"> New email linked to client</label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" checked style="accent-color:var(--purple)"> Task assigned to me</label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" checked style="accent-color:var(--purple)"> Task overdue</label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" checked style="accent-color:var(--purple)"> Auto-agenda ready for review (2 days before)</label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" checked style="accent-color:var(--purple)"> Read.ai transcript received</label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" style="accent-color:var(--purple)"> Weekly time tracking summary</label>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+</div>
+
+<!-- ══════════════ MODALS ══════════════ -->
+
+<div class="overlay" id="m-addClient">
+  <div class="modal">
+    <div class="mhdr"><div class="mtitle">Add new client</div><button class="mclose" onclick="closeM('addClient')">×</button></div>
+    <div class="frow"><label class="flbl">Organization name</label><input class="finput" id="nc-name" placeholder="e.g. Inspire Academy"></div>
+    <div class="frow"><label class="flbl">Email domain (for Gmail auto-linking)</label><input class="finput" id="nc-domain" placeholder="e.g. inspireacademy.org"></div>
+    <div class="frow"><label class="flbl">Primary contact</label><input class="finput" id="nc-contact" placeholder="Full name"></div>
+    <div class="frow"><label class="flbl">Service type</label><select class="fsel" id="nc-svc"><option>Fractional Ops</option><option>Consulting</option><option>Coaching</option></select></div>
+    <div class="frow"><label class="flbl">Google Drive folder URL (optional)</label><input class="finput" id="nc-drive" placeholder="Paste Drive folder link..."></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px">
+      <button class="btn sm" onclick="closeM('addClient')">Cancel</button>
+      <button class="btn p sm" onclick="addClient()">Add client</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="m-addTask">
+  <div class="modal">
+    <div class="mhdr"><div class="mtitle">Add task</div><button class="mclose" onclick="closeM('addTask')">×</button></div>
+    <div class="frow"><label class="flbl">Task title</label><input class="finput" id="nt-title" placeholder="What needs to be done?"></div>
+    <div class="frow"><label class="flbl">Client</label><select class="fsel" id="nt-client"></select></div>
+    <div class="frow-in">
+      <div><label class="flbl">Assign to</label><select class="fsel" id="nt-assignee"></select></div>
+      <div><label class="flbl">Due date</label><input type="date" class="finput" id="nt-due"></div>
+    </div>
+    <div class="frow-in">
+      <div><label class="flbl">Priority</label><select class="fsel" id="nt-pri"><option value="high">High</option><option value="med" selected>Medium</option><option value="low">Low</option></select></div>
+      <div><label class="flbl">Status</label><select class="fsel" id="nt-status"><option value="todo">To do</option><option value="inprog">In progress</option><option value="done">Done</option></select></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px">
+      <button class="btn sm" onclick="closeM('addTask')">Cancel</button>
+      <button class="btn p sm" onclick="addTask()">Add task</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="m-newMeeting">
+  <div class="modal">
+    <div class="mhdr"><div class="mtitle">Schedule meeting</div><button class="mclose" onclick="closeM('newMeeting')">×</button></div>
+    <div class="frow"><label class="flbl">Client</label><select class="fsel" id="nm-client"></select></div>
+    <div class="frow-in">
+      <div><label class="flbl">Date</label><input type="date" class="finput" id="nm-date"></div>
+      <div><label class="flbl">Meeting type</label><select class="fsel" id="nm-type"><option>Check-in</option><option>Strategy</option><option>Review</option><option>Kickoff</option><option>Coaching</option></select></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px">
+      <button class="btn sm" onclick="closeM('newMeeting')">Cancel</button>
+      <button class="btn p sm" onclick="addMeeting()">Schedule</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="m-transcript">
+  <div class="modal lg">
+    <div class="mhdr"><div class="mtitle">Process Read.ai transcript</div><button class="mclose" onclick="closeM('transcript')">×</button></div>
+    <div class="hint ok">✓ For the full transcript: open <a href="https://app.read.ai" target="_blank" style="color:var(--green);font-weight:500">app.read.ai</a> → select your meeting → Transcript tab → Download. Or connect your API key on the Read.ai page for one-click fetching.</div>
+    <div class="frow"><label class="flbl">Client</label><select class="fsel" id="tp-client"></select></div>
+    <div class="frow"><label class="flbl">Full transcript (paste here)</label><textarea class="ftarea" id="tp-text" placeholder="Paste the full Read.ai transcript here..." style="min-height:130px"></textarea></div>
+    <div class="hint info">The AI will generate structured meeting notes and create tasks assigned to you with due dates within the next 7 days.</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn sm" onclick="closeM('transcript')">Cancel</button>
+      <button class="btn p sm" onclick="processTranscript()">✨ Generate notes + tasks</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="m-addTime">
+  <div class="modal">
+    <div class="mhdr"><div class="mtitle">Add time entry manually</div><button class="mclose" onclick="closeM('addTime')">×</button></div>
+    <div class="frow"><label class="flbl">Client</label><select class="fsel" id="ate-client"></select></div>
+    <div class="frow"><label class="flbl">Project or task name</label><input class="finput" id="ate-task" placeholder="e.g. Ops review, Strategy call..."></div>
+    <div class="frow-in">
+      <div><label class="flbl">Date</label><input type="date" class="finput" id="ate-date"></div>
+      <div><label class="flbl">Duration (hours)</label><input type="number" class="finput" id="ate-hrs" placeholder="1.5" step="0.25" min="0.25"></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px">
+      <button class="btn sm" onclick="closeM('addTime')">Cancel</button>
+      <button class="btn p sm" onclick="addManualTime()">Save entry</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════ DATA ══════════════
+
+const TEMPLATE_URL = 'https://docs.google.com/document/d/1-2AfdYwvpt7lPWO-gR6JKL85Ezvgyh-ZgWipdunzjPI/edit';
+const today = new Date();
+const todayStr = today.toISOString().slice(0,10);
+const dn = n => { const d=new Date(today); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
+const fmtD = d => { if(!d)return''; const dt=new Date(d+'T12:00:00'); return dt.toLocaleDateString('en-US',{month:'short',day:'numeric'}); };
+const fmtDLong = d => { if(!d)return''; const dt=new Date(d+'T12:00:00'); return dt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}); };
+const isOD = (due,status) => due && due < todayStr && status!=='done';
+const inits = name => name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+const fmtHrs = secs => { const h=Math.floor(secs/3600),m=Math.floor((secs%3600)/60),s=secs%60; return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; };
+const fmtDur = secs => { const h=Math.floor(secs/3600),m=Math.floor((secs%3600)/60); return h>0?`${h}h ${m}m`:`${m}m`; };
+
+document.getElementById('dash-date').textContent = today.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+document.getElementById('month-label').textContent = today.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+
+const CLIENTS = [
+  {id:'c1',name:'Cancer Rehab Group',      domain:'cancerrehabgroup.com',  contact:'Primary Contact',svc:'fo',service:'Fractional Ops',color:'#5B4FCF',bg:'#EEF0FF'},
+  {id:'c2',name:'Geist Montessori Academy',domain:'geistmontessori.org',   contact:'Primary Contact',svc:'co',service:'Consulting',    color:'#0EA882',bg:'#E0F7F2'},
+  {id:'c3',name:'The Nature School',       domain:'thenatureschool.org',   contact:'Primary Contact',svc:'ch',service:'Coaching',      color:'#E8920C',bg:'#FEF3E0'},
+  {id:'c4',name:'Legal Prep Indy',         domain:'legalprep.org',         contact:'Primary Contact',svc:'co',service:'Consulting',    color:'#1B6FD8',bg:'#E8F0FC'},
+  {id:'c5',name:'Inspire Academy',         domain:'inspireacademy.org',    contact:'Primary Contact',svc:'fo',service:'Fractional Ops',color:'#2E8B57',bg:'#E8F5EE'},
+];
+
+const TEAM = [
+  {id:'u1',name:'You (owner)',  initials:'AA',color:'#5B4FCF',bg:'#EEF0FF'},
+  {id:'u2',name:'Team member 2',initials:'TM',color:'#0EA882',bg:'#E0F7F2'},
+  {id:'u3',name:'Team member 3',initials:'T3',color:'#E8920C',bg:'#FEF3E0'},
+];
+
+const TASKS = [
+  {id:'t1',title:'Send revised SOW to Cancer Rehab Group',          client:'c1',assignee:'u1',due:dn(-2),priority:'high',status:'todo'},
+  {id:'t2',title:'Prepare Q2 operations review — Geist Montessori', client:'c2',assignee:'u1',due:dn(1), priority:'high',status:'inprog'},
+  {id:'t3',title:'Follow up on coaching session notes',              client:'c3',assignee:'u2',due:dn(2), priority:'med', status:'todo'},
+  {id:'t4',title:'Complete bottleneck assessment — Legal Prep Indy', client:'c4',assignee:'u3',due:dn(3), priority:'med', status:'todo'},
+  {id:'t5',title:'Schedule next check-in with Inspire Academy',      client:'c5',assignee:'u1',due:dn(4), priority:'low', status:'todo'},
+  {id:'t6',title:'Update internal onboarding checklist',             client:'',  assignee:'u2',due:dn(5), priority:'low', status:'todo'},
+  {id:'t7',title:'Finalize agenda — The Nature School session',      client:'c3',assignee:'u1',due:dn(-1),priority:'high',status:'todo'},
+];
+
+const EMAILS = [
+  {id:'e1',from:'Cancer Rehab Group',    addr:'admin@cancerrehabgroup.com', client:'c1',subject:'Re: Operational review — questions about SOW',  preview:'Thanks for sending that over. A few things I wanted to flag about section 3...',        date:'Today',    unread:true},
+  {id:'e2',from:'Geist Montessori',      addr:'director@geistmontessori.org',client:'c2',subject:'Read.ai transcript — Strategy session 3/14',   preview:'Hi, attached is the meeting summary from our strategy call on Friday...',              date:'Today',    unread:true,isTranscript:true},
+  {id:'e3',from:'The Nature School',     addr:'hello@thenatureschool.org',   client:'c3',subject:'Coaching action items — checking in',           preview:'Just wanted to follow up on the items we discussed during our last coaching session...', date:'Yesterday',unread:true},
+  {id:'e4',from:'Legal Prep Indy',       addr:'ops@legalprep.org',           client:'c4',subject:'Process documentation question',                preview:'Can you clarify what format you need the workflow documentation submitted in?',          date:'Yesterday',unread:true},
+  {id:'e5',from:'Inspire Academy',       addr:'admin@inspireacademy.org',    client:'c5',subject:'Next meeting confirmed — Mar 24',               preview:'Tuesday at 2pm works great for the whole team. Looking forward to it.',                 date:'Mon',      unread:false},
+  {id:'e6',from:'Cancer Rehab Group',    addr:'admin@cancerrehabgroup.com',  client:'c1',subject:'Capacity planning doc — your thoughts?',        preview:'We put together a rough draft of the capacity plan and would love your input...',       date:'Fri',      unread:false},
+];
+
+const DRIVE_FILES = [
+  {id:'d0',name:'Agenda Template — Audrain Advising',      type:'doc',  client:'',  modified:'Mar 1', url:TEMPLATE_URL,isTemplate:true},
+  {id:'d1',name:'Cancer Rehab — SOW v2',                   type:'doc',  client:'c1',modified:'Mar 15'},
+  {id:'d2',name:'Cancer Rehab — Capacity Planning',        type:'sheet',client:'c1',modified:'Mar 10'},
+  {id:'d3',name:'Geist Montessori — Bottleneck Analysis',  type:'doc',  client:'c2',modified:'Mar 14'},
+  {id:'d4',name:'Geist Montessori — Q2 Ops Review',        type:'doc',  client:'c2',modified:'Mar 12'},
+  {id:'d5',name:'The Nature School — Coaching Framework',  type:'pdf',  client:'c3',modified:'Mar 8'},
+  {id:'d6',name:'Legal Prep Indy — Process Audit',         type:'sheet',client:'c4',modified:'Mar 11'},
+  {id:'d7',name:'Inspire Academy — Onboarding Checklist',  type:'doc',  client:'c5',modified:'Mar 13'},
+  {id:'d8',name:'Inspire Academy — Ops Sustainability Plan',type:'doc', client:'c5',modified:'Mar 9'},
+];
+
+// Calendar events — sample data (live: from Google Calendar API)
+const CAL_EVENTS = [
+  {id:'cal1',title:'Cancer Rehab Group — Weekly Check-in',    client:'c1',date:dn(2), time:'10:00 AM',type:'Check-in',  triggerAgenda:true,  agendaReady:false},
+  {id:'cal2',title:'Geist Montessori — Strategy Session',     client:'c2',date:dn(3), time:'2:00 PM', type:'Strategy',  triggerAgenda:true,  agendaReady:true},
+  {id:'cal3',title:'The Nature School — Coaching Session',    client:'c3',date:dn(6), time:'11:00 AM',type:'Coaching',  triggerAgenda:false, agendaReady:false},
+  {id:'cal4',title:'Legal Prep Indy — Process Review',        client:'c4',date:dn(8), time:'3:00 PM', type:'Review',    triggerAgenda:false, agendaReady:false},
+  {id:'cal5',title:'Inspire Academy — Operations Check-in',   client:'c5',date:dn(10),time:'1:00 PM', type:'Check-in',  triggerAgenda:false, agendaReady:false},
+];
+
+const MEETINGS = [
+  {id:'m1',client:'c2',date:dn(3),type:'Strategy',approved:false},
+  {id:'m2',client:'c3',date:dn(6),type:'Coaching', approved:true},
+];
+
+const ACTIVITIES = [
+  {type:'email',  title:'New email from Cancer Rehab Group',   sub:'Re: Operational review — questions about SOW', time:'18m ago'},
+  {type:'cal',    title:'Auto-agenda ready for review',         sub:'Cancer Rehab Group check-in in 2 days',        time:'1h ago'},
+  {type:'meeting',title:'Read.ai transcript detected',          sub:'Geist Montessori — Strategy session',          time:'2h ago'},
+  {type:'task',   title:'Task overdue — action needed',         sub:'Finalize agenda for The Nature School',        time:'3h ago'},
+];
+
+// Time entries — persisted in localStorage
+let TIME_ENTRIES = JSON.parse(localStorage.getItem('aa_time') || '[]');
+// Add sample entries if empty
+if (TIME_ENTRIES.length === 0) {
+  const sampleMonth = today.toISOString().slice(0,7);
+  TIME_ENTRIES = [
+    {id:'te1',client:'c1',task:'Operational review prep',       duration:5400, date:dn(-8), month:sampleMonth},
+    {id:'te2',client:'c2',task:'Q2 strategy session',           duration:7200, date:dn(-6), month:sampleMonth},
+    {id:'te3',client:'c3',task:'Coaching session — goal setting',duration:3600, date:dn(-5), month:sampleMonth},
+    {id:'te4',client:'c1',task:'SOW revision and review',       duration:4500, date:dn(-3), month:sampleMonth},
+    {id:'te5',client:'c4',task:'Process audit kickoff',         duration:5400, date:dn(-2), month:sampleMonth},
+    {id:'te6',client:'c5',task:'Onboarding checklist build',    duration:3600, date:dn(-1), month:sampleMonth},
+  ];
+  saveTime();
+}
+
+function saveTime() { localStorage.setItem('aa_time', JSON.stringify(TIME_ENTRIES)); }
+
+// Read.ai API key (stored in localStorage)
+let READAI_KEY = localStorage.getItem('aa_readai_key') || '';
+
+// ══════════════ HELPERS ══════════════
+
+const gc = id => CLIENTS.find(c=>c.id===id) || {name:'—',color:'#888',bg:'#eee',svc:''};
+const gt = id => TEAM.find(m=>m.id===id) || {name:'Unassigned'};
+
+// ══════════════ NAVIGATION ══════════════
+
+function nav(id, el) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if (el) el.classList.add('active');
+  const renders = {
+    dashboard: renderDashboard,
+    clients: renderClients,
+    tasks: () => renderTasks('all'),
+    meetings: renderMeetings,
+    time: renderTime,
+    gmail: renderGmail,
+    drive: renderDrive,
+    calendar: renderCalendar,
+    readai: renderReadAI,
+    settings: renderSettings,
+  };
+  if (renders[id]) renders[id]();
+}
+
+// ══════════════ TASK HTML ══════════════
+
+function taskHTML(t) {
+  const c = gc(t.client);
+  const od = isOD(t.due, t.status);
+  const done = t.status === 'done';
+  return `<div class="ti">
+    <div class="tchk ${done?'chk':''}" onclick="toggleTask('${t.id}')">${done?'✓':''}</div>
+    <div class="pip ${t.priority}"></div>
+    <div class="tb2">
+      <div class="tt ${done?'done':''}">${t.title}</div>
+      <div class="tm2">
+        ${t.client?`<span class="b ${c.svc}" style="background:${c.bg};color:${c.color}">${c.name}</span>`:''}
+        <span class="tdue ${od?'od':''}">${t.due?'Due '+fmtD(t.due):''}</span>
+        <span style="font-size:11px;color:var(--ts)">· ${gt(t.assignee).name}</span>
+        <span class="b ${t.status}">${t.status==='todo'?'To do':t.status==='inprog'?'In progress':'Done'}</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleTask(id) {
+  const t = TASKS.find(x=>x.id===id);
+  if(t) t.status = t.status==='done'?'todo':'done';
+  const open = TASKS.filter(x=>x.status!=='done').length;
+  document.getElementById('nb-tasks').textContent = open;
+  const d = document.getElementById('dash-task-ct');
+  if(d) d.textContent = open;
+  const ml = document.getElementById('main-task-list');
+  if(ml && ml.children.length) renderTasks(window._tf||'all');
+  renderDashboard();
+}
+
+// ══════════════ DASHBOARD ══════════════
+
+function renderDashboard() {
+  // Calendar alerts
+  const triggeredEvents = CAL_EVENTS.filter(e => e.triggerAgenda);
+  const alertsEl = document.getElementById('dash-cal-alerts');
+  if(alertsEl) {
+    alertsEl.innerHTML = triggeredEvents.map(e => {
+      const c = gc(e.client);
+      const daysUntil = Math.round((new Date(e.date+'T12:00:00') - today) / 86400000);
+      return `<div class="cal-alert ${e.agendaReady?'ready':''}">
+        <span style="font-size:20px">${e.agendaReady?'✅':'🗓️'}</span>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600;margin-bottom:2px">${e.agendaReady?'Agenda ready for approval':'Auto-agenda triggered'} — ${c.name}</div>
+          <div style="font-size:12px;color:var(--tm)">${e.type} in ${daysUntil} day${daysUntil!==1?'s':''} · ${fmtD(e.date)} at ${e.time}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          ${e.agendaReady
+            ? `<button class="btn sm s" onclick="nav('meetings',null)">Review agenda</button>`
+            : `<button class="btn sm p" onclick="genAgendaFor('${e.client}')">Generate agenda</button>`}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Stats
+  const totalSecs = TIME_ENTRIES.filter(e=>e.month===today.toISOString().slice(0,7)).reduce((a,e)=>a+e.duration,0);
+  const dashHrs = document.getElementById('dash-hrs');
+  if(dashHrs) dashHrs.textContent = totalSecs > 0 ? (totalSecs/3600).toFixed(1)+'h' : '0h';
+
+  // Tasks
+  const mine = TASKS.filter(t=>t.assignee==='u1'&&t.status!=='done').slice(0,4);
+  const dtEl = document.getElementById('dash-tasks');
+  if(dtEl) dtEl.innerHTML = mine.map(taskHTML).join('') || '<div class="empty">All caught up! 🎉</div>';
+
+  // Activity
+  const actEl = document.getElementById('dash-activity');
+  if(actEl) actEl.innerHTML = ACTIVITIES.map(a=>`
+    <div class="aitem">
+      <div class="aic ${a.type}">${{email:'✉️',task:'✅',meeting:'📅',note:'📝',cal:'🗓️',time:'⏱️'}[a.type]||'•'}</div>
+      <div class="ab"><div class="at">${a.title}</div><div class="as">${a.sub}</div></div>
+      <div class="ati">${a.time}</div>
+    </div>`).join('');
+}
+
+// ══════════════ CLIENTS ══════════════
+
+function renderClients() {
+  document.getElementById('clients-grid').innerHTML = CLIENTS.map(c=>`
+    <div class="card click" onclick="showClientDetail('${c.id}')">
+      <div class="cinit" style="background:${c.bg};color:${c.color}">${inits(c.name)}</div>
+      <div class="cname">${c.name}</div>
+      <div class="cdom">${c.domain}</div>
+      <span class="b ${c.svc}">${c.service}</span>
+      <div class="cfoot">
+        <span class="b email">Gmail</span>
+        <span class="b drive">Drive</span>
+        <span style="margin-left:auto;font-size:11px;color:var(--ts)">${TASKS.filter(t=>t.client===c.id&&t.status!=='done').length} tasks</span>
+      </div>
+    </div>`).join('');
+}
+
+function showClientDetail(id) {
+  const c = CLIENTS.find(x=>x.id===id); if(!c) return;
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-clientDetail').classList.add('active');
+
+  const cEmails = EMAILS.filter(e=>e.client===id);
+  const cTasks  = TASKS.filter(t=>t.client===id);
+  const cFiles  = DRIVE_FILES.filter(f=>f.client===id);
+  const cTime   = TIME_ENTRIES.filter(e=>e.client===id);
+  const totalSecs = cTime.reduce((a,e)=>a+e.duration,0);
+
+  document.getElementById('cd-header').innerHTML = `
+    <div class="cdinit" style="background:${c.bg};color:${c.color}">${inits(c.name)}</div>
+    <div style="flex:1">
+      <div class="cdname">${c.name}</div>
+      <div class="cdmeta">${c.domain} · <span class="b ${c.svc}">${c.service}</span></div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn sm" onclick="openMeetingFor('${c.id}')">📅 Prep meeting</button>
+      <button class="btn sm p" onclick="openTaskFor('${c.id}')">+ Task</button>
+      <button class="btn sm" onclick="openTimeFor('${c.id}')">⏱️ Log time</button>
+    </div>`;
+
+  document.getElementById('cd-overview').innerHTML = `
+    <div class="tc">
+      <div><div class="st">Recent emails</div><div class="lc">${cEmails.slice(0,3).map(emailRowHTML).join('')||'<div class="empty">No emails yet</div>'}</div></div>
+      <div><div class="st">Open tasks</div><div class="tlist">${cTasks.filter(t=>t.status!=='done').map(taskHTML).join('')||'<div class="empty">No open tasks</div>'}</div></div>
+    </div>`;
+  document.getElementById('cd-emails').innerHTML = `<div class="lc">${cEmails.map(emailRowHTML).join('')||'<div class="empty">No emails yet</div>'}</div>`;
+  document.getElementById('cd-drive').innerHTML  = `<div class="lc">${cFiles.map(driveRowHTML).join('')||'<div class="empty">No Drive files yet</div>'}</div>`;
+  document.getElementById('cd-tasks').innerHTML  = `<div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="btn sm p" onclick="openTaskFor('${id}')">+ Add task</button></div><div class="tlist">${cTasks.map(taskHTML).join('')||'<div class="empty">No tasks yet</div>'}</div>`;
+  document.getElementById('cd-notes').innerHTML  = `
+    <div style="margin-bottom:14px"><textarea class="ftarea" placeholder="Add a check-in note for ${c.name}..." style="width:100%;min-height:100px"></textarea><div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn sm p">Save note</button></div></div>
+    <div class="note-card"><div class="note-tx">Coaching session recap — covered goal-setting framework and 30-day milestones. Strong engagement. All action items assigned and understood.</div><div class="note-meta">Mar 10 · Added by You</div></div>
+    <div class="note-card"><div class="note-tx">Kickoff check-in completed. Mapped current operational workflow end-to-end. Identified 3 key bottlenecks in the intake process. Follow-up scheduled for next week.</div><div class="note-meta">Feb 28 · Added by You</div></div>`;
+  document.getElementById('cd-time').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div style="font-size:22px;font-weight:600;color:var(--purple);font-family:var(--mono)">${(totalSecs/3600).toFixed(1)}h</div>
+      <button class="btn sm p" onclick="openTimeFor('${id}')">⏱️ Log time</button>
+    </div>
+    <div class="tlist">${cTime.length ? cTime.map(te=>`
+      <div class="ti">
+        <div class="tb2"><div class="tt">${te.task}</div><div class="tm2"><span style="font-size:11px;color:var(--ts)">${fmtD(te.date)}</span></div></div>
+        <div style="font-family:var(--mono);font-size:13px;font-weight:500;color:var(--purple)">${fmtDur(te.duration)}</div>
+      </div>`).join('') : '<div class="empty">No time logged yet</div>'}`;
+
+  ['cd-overview','cd-emails','cd-drive','cd-tasks','cd-notes','cd-time'].forEach(x=>document.getElementById(x).style.display='none');
+  document.getElementById('cd-overview').style.display='block';
+  document.querySelectorAll('#cd-tabs .tab').forEach((t,i)=>t.classList.toggle('active',i===0));
+}
+
+function cdTab(el, tabId) {
+  document.querySelectorAll('#cd-tabs .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  ['cd-overview','cd-emails','cd-drive','cd-tasks','cd-notes','cd-time'].forEach(id=>document.getElementById(id).style.display=id===tabId?'block':'none');
+}
+
+// ══════════════ ROW HTML ══════════════
+
+function emailRowHTML(e) {
+  return `<div class="erow ${e.unread?'unread':''}" onclick="${e.isTranscript?`openTranscriptFor('${e.client}')`:``}">
+    <div class="edot ${e.unread?'':'read'}"></div>
+    <div class="efrom">${e.from}</div>
+    <div class="ebody">
+      <div class="esubj">${e.subject}${e.isTranscript?` <span class="b readai" style="font-size:10px;margin-left:5px">Read.ai</span>`:''}</div>
+      <div class="eprev">${e.preview}</div>
+    </div>
+    <div class="edate">${e.date}</div>
+  </div>`;
+}
+
+function driveRowHTML(f) {
+  const icons={doc:'📄',sheet:'📊',pdf:'📑',folder:'📁'};
+  return `<div class="drow" onclick="${f.url?`window.open('${f.url}','_blank')`:''}">
+    <div class="dic ${f.type}">${icons[f.type]||'📄'}</div>
+    <div class="dname">${f.name}${f.isTemplate?` <span class="b drive" style="font-size:10px;margin-left:5px">Template</span>`:''}</div>
+    <div class="ddate">${f.modified}</div>
+    <button class="btn xs" onclick="event.stopPropagation();${f.url?`window.open('${f.url}','_blank')`:''}">${f.url?'Open ↗':'Open'}</button>
+  </div>`;
+}
+
+// ══════════════ TASKS ══════════════
+
+function renderTasks(filter) {
+  window._tf = filter;
+  let list = TASKS;
+  if(filter==='mine')    list = TASKS.filter(t=>t.assignee==='u1');
+  if(filter==='overdue') list = TASKS.filter(t=>isOD(t.due,t.status));
+  if(filter==='done')    list = TASKS.filter(t=>t.status==='done');
+  if(filter==='all')     list = [...TASKS.filter(t=>t.status!=='done'),...TASKS.filter(t=>t.status==='done')];
+  document.getElementById('main-task-list').innerHTML = list.map(taskHTML).join('') || '<div class="empty">No tasks here</div>';
+}
+
+function filterTasks(el, f) {
+  document.querySelectorAll('#page-tasks .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active'); renderTasks(f);
+}
+
+// ══════════════ MEETINGS ══════════════
+
+function renderMeetings() {
+  document.getElementById('meetings-list').innerHTML = MEETINGS.map(m=>{
+    const c = gc(m.client);
+    return `<div class="mrow">
+      <div class="minit" style="background:${c.bg};color:${c.color}">${inits(c.name)}</div>
+      <div class="minfo">
+        <div class="mname">${c.name} — ${m.type}</div>
+        <div class="mmeta">${fmtDLong(m.date)} · ${m.approved?'<span style="color:var(--teal);font-weight:500">Agenda approved ✓</span>':'<span style="color:var(--amber);font-weight:500">Agenda pending</span>'}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button class="btn sm" onclick="setWFClient('${m.client}')">Prep agenda</button>
+        ${!m.approved?`<button class="btn sm s" onclick="approveMtg('${m.id}')">✓ Approve</button>`:''}
+        <button class="btn sm" onclick="openTranscriptFor('${m.client}')">Transcript</button>
+      </div>
+    </div>`;
+  }).join('') || '<div class="empty">No upcoming meetings</div>';
+  renderWorkflow();
+}
+
+function approveMtg(id) {
+  const m = MEETINGS.find(x=>x.id===id); if(m) m.approved=true;
+  renderMeetings();
+}
+
+function renderWorkflow() {
+  document.getElementById('meeting-workflow').innerHTML = `
+    <div class="wfgrid">
+      <div class="wfstep hl">
+        <div class="wfbadge">Step 1 · Pre-meeting</div>
+        <div class="wftitle">Generate agenda</div>
+        <div class="wfdesc">Select a client. The AI reads last notes and recent emails, then suggests agenda items using your template.</div>
+        <select class="fsel" id="wf-client" style="margin-bottom:9px">
+          <option value="">Select client...</option>
+          ${CLIENTS.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}
+        </select>
+        <div style="margin-bottom:9px"><a class="tlink" href="${TEMPLATE_URL}" target="_blank">📄 Using your agenda template ↗</a></div>
+        <button class="btn p sm" onclick="generateAgenda()">✨ Generate suggestions</button>
+      </div>
+      <div class="wfstep">
+        <div class="wfbadge">Step 2 · Approve</div>
+        <div class="wftitle">Review & save to Drive</div>
+        <div class="wfdesc">Any team member reviews and approves. A copy is saved to your Google Drive as a new doc.</div>
+        <div id="wf-step2"><div style="font-size:12px;color:var(--ts);padding:6px 0">Waiting for step 1 — select a client above...</div></div>
+      </div>
+      <div class="wfstep">
+        <div class="wfbadge">Step 3 · Post-meeting</div>
+        <div class="wftitle">Process full transcript</div>
+        <div class="wfdesc">Fetch the full transcript from Read.ai API (not just the email summary), or paste it manually. AI generates structured notes.</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn p sm" onclick="nav('readai',null)">🎙️ Fetch from Read.ai</button>
+          <button class="btn sm" onclick="openTranscriptFor('')">Paste manually</button>
+        </div>
+      </div>
+      <div class="wfstep">
+        <div class="wfbadge">Step 4 · Auto-tasks</div>
+        <div class="wftitle">Tasks auto-created</div>
+        <div class="wfdesc">Action items from the transcript are assigned to you with due dates within the next 7 days and appear in your task board.</div>
+        <div id="wf-step4" style="font-size:12px;color:var(--ts);padding:6px 0">Tasks will appear here after transcript processing.</div>
+      </div>
+    </div>`;
+}
+
+function setWFClient(cid) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-meetings').classList.add('active');
+  renderMeetings();
+  setTimeout(()=>{ const s=document.getElementById('wf-client'); if(s) s.value=cid; },50);
+}
+
+function generateAgenda() {
+  const cid = document.getElementById('wf-client')?.value;
+  if(!cid){alert('Please select a client first.');return;}
+  const c = gc(cid);
+  const s2 = document.getElementById('wf-step2');
+  s2.innerHTML = `<div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--purple);padding:6px 0"><div class="spinner"></div> Reading last notes + emails for ${c.name}...</div>`;
+  setTimeout(()=>{
+    const items=[
+      {text:'Welcome and check-in — how has the team been?',time:'5 min'},
+      {text:'Review action items from last meeting — status on each',time:'10 min'},
+      {text:'Operations update — progress on identified bottlenecks',time:'15 min'},
+      {text:'Strategic priorities — Q2 focus areas and resources',time:'15 min'},
+      {text:'Barriers and challenges — anything blocking progress?',time:'10 min'},
+      {text:'Next steps, task assignments, confirm next meeting date',time:'5 min'},
+    ];
+    s2.innerHTML = `
+      <div class="aipanel">
+        <div class="ailbl">✨ AI-suggested agenda for ${c.name}</div>
+        ${items.map((it,i)=>`<div class="agrow"><input type="checkbox" class="agcb" checked><span class="agtx">${i+1}. ${it.text}</span><span class="agtm">${it.time}</span></div>`).join('')}
+      </div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <button class="btn sm" onclick="editAgendaAI('${cid}')">Edit</button>
+        <button class="btn sm s" onclick="approveAgenda('${cid}')">✓ Approve & save to Drive</button>
+      </div>`;
+  },1200);
+}
+
+function genAgendaFor(cid) {
+  nav('meetings', document.querySelector('.nav[onclick*="meetings"]'));
+  setTimeout(()=>{ const s=document.getElementById('wf-client'); if(s){s.value=cid;generateAgenda();} },100);
+}
+
+function editAgendaAI(cid) { alert('In the live version, this opens a Claude AI chat to refine the agenda items.'); }
+function approveAgenda(cid) {
+  const c=gc(cid);
+  alert(`✓ Agenda approved!\n\nIn the live version with Google Drive connected, this will:\n1. Create a copy of your agenda template\n2. Name it "${c.name} — Agenda ${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}"\n3. Populate it with the approved items\n4. Save to your Google Drive`);
+}
+
+function openMeetingFor(cid) { setWFClient(cid); }
+
+// ══════════════ TIME TRACKER ══════════════
+
+let timerInterval = null;
+let timerStart = null;
+let timerSeconds = 0;
+let timerRunning = false;
+
+function toggleTimer() {
+  if(!timerRunning) {
+    const cid = document.getElementById('timer-client').value;
+    const task = document.getElementById('timer-task').value.trim();
+    if(!cid){alert('Please select a client first.');return;}
+    if(!task){alert('Please enter a project or task name.');return;}
+    timerRunning = true;
+    timerStart = Date.now() - timerSeconds*1000;
+    timerInterval = setInterval(()=>{
+      timerSeconds = Math.floor((Date.now()-timerStart)/1000);
+      document.getElementById('timer-display').textContent = fmtHrs(timerSeconds);
+    },1000);
+    document.getElementById('timer-btn').textContent = '⏹ Stop timer';
+    document.getElementById('timer-btn').className = 'btn s';
+    document.getElementById('timer-card').classList.add('running');
+    document.getElementById('timer-display').classList.add('running');
+    document.getElementById('timer-discard').style.display = 'inline-flex';
+  } else {
+    stopTimer(true);
+  }
+}
+
+function stopTimer(save) {
+  clearInterval(timerInterval);
+  timerInterval = null;
+  timerRunning = false;
+  if(save && timerSeconds > 0) {
+    const cid = document.getElementById('timer-client').value;
+    const task = document.getElementById('timer-task').value.trim();
+    TIME_ENTRIES.unshift({
+      id:'te'+Date.now(), client:cid, task, duration:timerSeconds,
+      date:todayStr, month:today.toISOString().slice(0,7)
+    });
+    saveTime();
+    ACTIVITIES.unshift({type:'time',title:`Time logged — ${gc(cid).name}`,sub:`${task} · ${fmtDur(timerSeconds)}`,time:'Just now'});
+  }
+  timerSeconds = 0;
+  document.getElementById('timer-display').textContent = '00:00:00';
+  document.getElementById('timer-btn').textContent = '▶ Start timer';
+  document.getElementById('timer-btn').className = 'btn p';
+  document.getElementById('timer-card').classList.remove('running');
+  document.getElementById('timer-display').classList.remove('running');
+  document.getElementById('timer-discard').style.display = 'none';
+  document.getElementById('timer-task').value = '';
+  renderTime();
+}
+
+function discardTimer() { if(confirm('Discard this time entry?')) stopTimer(false); }
+
+function renderTime() {
+  // Populate timer client select
+  const tcs = document.getElementById('timer-client');
+  if(tcs) { tcs.innerHTML = '<option value="">Select client...</option>'+CLIENTS.map(c=>`<option value="${c.id}">${c.name}</option>`).join(''); }
+
+  // Monthly summary
+  const curMonth = today.toISOString().slice(0,7);
+  const summary = {};
+  TIME_ENTRIES.filter(e=>e.month===curMonth).forEach(e=>{
+    if(!summary[e.client]) summary[e.client]=0;
+    summary[e.client]+=e.duration;
+  });
+  const totalMonthSecs = Object.values(summary).reduce((a,b)=>a+b,0);
+  document.getElementById('monthly-summary').innerHTML = [
+    `<div class="ms-card" style="background:var(--purple);border-color:var(--purple)"><div class="ms-client" style="color:rgba(255,255,255,.7)">Total this month</div><div class="ms-hours" style="color:#fff">${(totalMonthSecs/3600).toFixed(1)}h</div><div class="ms-sub" style="color:rgba(255,255,255,.6)">${TIME_ENTRIES.filter(e=>e.month===curMonth).length} entries</div></div>`,
+    ...CLIENTS.filter(c=>summary[c.id]).map(c=>`<div class="ms-card"><div class="ms-client">${c.name}</div><div class="ms-hours">${(summary[c.id]/3600).toFixed(1)}h</div><div class="ms-sub">${TIME_ENTRIES.filter(e=>e.client===c.id&&e.month===curMonth).length} entries · ${c.service}</div></div>`)
+  ].join('');
+
+  // Populate filters
+  const cf = document.getElementById('te-client-filter');
+  if(cf) cf.innerHTML='<option value="">All clients</option>'+CLIENTS.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+
+  const mf = document.getElementById('te-month-filter');
+  if(mf) {
+    const months = [...new Set(TIME_ENTRIES.map(e=>e.month))].sort().reverse();
+    mf.innerHTML = months.map(m=>{
+      const dt=new Date(m+'-15');
+      return `<option value="${m}" ${m===curMonth?'selected':''}>${dt.toLocaleDateString('en-US',{month:'long',year:'numeric'})}</option>`;
+    }).join('');
+  }
+
+  // Add manual entry button to filter bar
+  const fb = document.querySelector('#page-time .filter-bar');
+  if(fb && !fb.querySelector('.add-manual-btn')) {
+    const btn = document.createElement('button');
+    btn.className = 'btn sm add-manual-btn';
+    btn.textContent = '+ Manual entry';
+    btn.onclick = ()=>openM('addTime');
+    fb.appendChild(btn);
+  }
+
+  renderTimeEntries();
+
+  // Update dashboard hours
+  const dh = document.getElementById('dash-hrs');
+  if(dh) dh.textContent=(totalMonthSecs/3600).toFixed(1)+'h';
+}
+
+function renderTimeEntries() {
+  const cf = document.getElementById('te-client-filter')?.value||'';
+  const mf = document.getElementById('te-month-filter')?.value||'';
+  let entries = TIME_ENTRIES;
+  if(cf) entries = entries.filter(e=>e.client===cf);
+  if(mf) entries = entries.filter(e=>e.month===mf);
+
+  document.getElementById('time-entries-list').innerHTML = entries.length ? entries.map(te=>{
+    const c=gc(te.client);
+    return `<div class="te-row">
+      <div class="te-client"><span class="b ${c.svc}" style="background:${c.bg};color:${c.color}">${c.name}</span></div>
+      <div class="te-task">${te.task}</div>
+      <div class="te-dur">${fmtDur(te.duration)}</div>
+      <div class="te-date">${fmtD(te.date)}</div>
+      <button class="btn xs" style="color:var(--red)" onclick="deleteTimeEntry('${te.id}')">✕</button>
+    </div>`;
+  }).join('') : '<div class="empty">No time entries for this period</div>';
+}
+
+function deleteTimeEntry(id) {
+  if(!confirm('Delete this time entry?')) return;
+  const idx = TIME_ENTRIES.findIndex(e=>e.id===id);
+  if(idx>-1) TIME_ENTRIES.splice(idx,1);
+  saveTime();
+  renderTime();
+}
+
+function addManualTime() {
+  const cid = document.getElementById('ate-client').value;
+  const task = document.getElementById('ate-task').value.trim();
+  const date = document.getElementById('ate-date').value;
+  const hrs = parseFloat(document.getElementById('ate-hrs').value);
+  if(!cid||!task||!date||isNaN(hrs)||hrs<=0){alert('Please fill in all fields.');return;}
+  const dur = Math.round(hrs*3600);
+  const month = date.slice(0,7);
+  TIME_ENTRIES.unshift({id:'te'+Date.now(),client:cid,task,duration:dur,date,month});
+  saveTime();
+  closeM('addTime');
+  renderTime();
+}
+
+function openTimeFor(cid) {
+  const sel = document.getElementById('ate-client');
+  sel.innerHTML = '<option value="">Select client...</option>'+CLIENTS.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  if(cid) sel.value = cid;
+  document.getElementById('ate-date').value = todayStr;
+  openM('addTime');
+}
+
+// ══════════════ GMAIL ══════════════
+
+function renderGmail() {
+  const sel = document.getElementById('gmail-cf');
+  sel.innerHTML='<option value="">All clients</option>'+CLIENTS.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  applyEmailFilter();
+}
+function filterEmails() { applyEmailFilter(); }
+function applyEmailFilter() {
+  const s=(document.getElementById('gmail-search')?.value||'').toLowerCase();
+  const c=document.getElementById('gmail-cf')?.value||'';
+  const f=EMAILS.filter(e=>(!s||[e.subject,e.from,e.preview].some(x=>x.toLowerCase().includes(s)))&&(!c||e.client===c));
+  document.getElementById('gmail-list').innerHTML=f.map(emailRowHTML).join('')||'<div class="empty">No emails match</div>';
+}
+
+// ══════════════ DRIVE ══════════════
+
+function renderDrive() {
+  const sel=document.getElementById('drive-cf');
+  sel.innerHTML='<option value="">All clients</option>'+CLIENTS.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  applyDriveFilter();
+}
+function filterDrive() { applyDriveFilter(); }
+function applyDriveFilter() {
+  const c=document.getElementById('drive-cf')?.value||'';
+  const f=c?DRIVE_FILES.filter(f=>f.client===c||f.isTemplate):DRIVE_FILES;
+  document.getElementById('drive-list').innerHTML=f.map(driveRowHTML).join('');
+}
+
+// ══════════════ CALENDAR ══════════════
+
+function renderCalendar() {
+  // Alerts for events in 2 days
+  const triggers = CAL_EVENTS.filter(e=>e.triggerAgenda);
+  document.getElementById('cal-alerts').innerHTML = triggers.map(e=>{
+    const c=gc(e.client);
+    const daysUntil=Math.round((new Date(e.date+'T12:00:00')-today)/86400000);
+    return `<div class="cal-alert ${e.agendaReady?'ready':''}">
+      <span style="font-size:20px">${e.agendaReady?'✅':'⚡'}</span>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600;margin-bottom:2px">${e.agendaReady?'Agenda ready for approval':'Auto-agenda triggered'} — ${c.name}</div>
+        <div style="font-size:12px;color:var(--tm)">${e.type} · ${fmtDLong(e.date)} at ${e.time} (${daysUntil} day${daysUntil!==1?'s':''} away)</div>
+      </div>
+      ${e.agendaReady
+        ?`<button class="btn sm s" onclick="nav('meetings',null)">Review & approve</button>`
+        :`<button class="btn sm p" onclick="genAgendaFor('${e.client}')">Generate now</button>`}
+    </div>`;
+  }).join('');
+
+  // Upcoming
+  document.getElementById('cal-upcoming').innerHTML = CAL_EVENTS.slice(0,4).map(e=>{
+    const c=gc(e.client);
+    const daysUntil=Math.round((new Date(e.date+'T12:00:00')-today)/86400000);
+    return `<div class="calrow">
+      <div class="calbullet" style="background:${c.color}"></div>
+      <div class="calinfo">
+        <div class="caltitle">${e.title}</div>
+        <div class="calmeta">${fmtDLong(e.date)} · ${e.time} · in ${daysUntil} days</div>
+      </div>
+      ${e.triggerAgenda?`<span class="b cal">Agenda auto-triggered</span>`:daysUntil<=2?`<span class="b todo">Soon</span>`:''}
+    </div>`;
+  }).join('');
+
+  // Queue
+  document.getElementById('cal-queue').innerHTML = `
+    <div class="hint info" style="margin-bottom:10px">Meetings within the next 2 days automatically trigger agenda generation. You'll see an alert on your dashboard.</div>
+    ${triggers.length ? triggers.map(e=>{
+      const c=gc(e.client);
+      return `<div class="calrow">
+        <div class="calbullet" style="background:${c.color}"></div>
+        <div class="calinfo">
+          <div class="caltitle">${c.name}</div>
+          <div class="calmeta">${e.type} · ${fmtDLong(e.date)}</div>
+        </div>
+        <span class="b ${e.agendaReady?'done':'todo'}">${e.agendaReady?'Agenda ready':'Triggered'}</span>
+      </div>`;
+    }).join('') : '<div class="empty">No meetings in auto-agenda window</div>'}`;
+
+  // All events
+  document.getElementById('cal-all').innerHTML = CAL_EVENTS.map(e=>{
+    const c=gc(e.client);
+    return `<div class="calrow" style="border-bottom:1px solid var(--br)">
+      <div class="calbullet" style="background:${c.color}"></div>
+      <div class="calinfo" style="flex:1">
+        <div class="caltitle">${e.title}</div>
+        <div class="calmeta">${fmtDLong(e.date)} · ${e.time}</div>
+      </div>
+      <span class="b ${c.svc}" style="background:${c.bg};color:${c.color};margin-right:8px">${c.name}</span>
+      <button class="btn xs" onclick="genAgendaFor('${e.client}')">Prep agenda</button>
+    </div>`;
+  }).join('');
+}
+
+function syncCal() {
+  const btn = event.target;
+  btn.disabled=true; btn.textContent='Syncing...';
+  setTimeout(()=>{btn.disabled=false;btn.textContent='🔄 Sync now';alert('Calendar synced! In the live version, this pulls directly from your Google Calendar API.');},1200);
+}
+
+// ══════════════ READ.AI ══════════════
+
+function renderReadAI() {
+  const statusEl = document.getElementById('readai-status');
+  const keyEl = document.getElementById('readai-key');
+  if(READAI_KEY) {
+    if(statusEl) statusEl.innerHTML='<div class="hint ok" style="margin-bottom:10px">✓ API key connected — ready to fetch full transcripts</div>';
+    if(keyEl) keyEl.value = READAI_KEY;
+    renderReadAIMeetings();
+  } else {
+    if(statusEl) statusEl.innerHTML='';
+  }
+}
+
+function saveReadAIKey() {
+  const key = document.getElementById('readai-key').value.trim();
+  if(!key){alert('Please enter your API key.');return;}
+  READAI_KEY = key;
+  localStorage.setItem('aa_readai_key', key);
+  renderReadAI();
+  alert('✓ Read.ai API key saved! In the live version, this will connect to https://api.read.ai/v1/meetings to fetch your full transcripts.');
+}
+
+function renderReadAIMeetings() {
+  // Sample meeting data (live: from Read.ai API GET /v1/meetings)
+  const recentMeetings = [
+    {id:'rm1',title:'Geist Montessori — Strategy Session',       date:dn(-1), duration:'58 min', client:'c2',hasTranscript:true},
+    {id:'rm2',title:'Cancer Rehab Group — Weekly Check-in',      date:dn(-3), duration:'42 min', client:'c1',hasTranscript:true},
+    {id:'rm3',title:'The Nature School — Coaching Session',      date:dn(-5), duration:'60 min', client:'c3',hasTranscript:true},
+    {id:'rm4',title:'Legal Prep Indy — Process Documentation',   date:dn(-7), duration:'35 min', client:'c4',hasTranscript:true},
+  ];
+  document.getElementById('readai-meetings-list').innerHTML = recentMeetings.map(m=>{
+    const c=gc(m.client);
+    return `<div class="mrow" style="margin-bottom:7px">
+      <div class="minit" style="background:${c.bg};color:${c.color}">${inits(c.name)}</div>
+      <div class="minfo">
+        <div class="mname">${m.title}</div>
+        <div class="mmeta">${fmtDLong(m.date)} · ${m.duration}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <span class="b done" style="font-size:10px">Full transcript available</span>
+        <button class="btn sm p" onclick="fetchTranscript('${m.id}','${m.client}')">Fetch & process</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function fetchTranscript(meetingId, clientId) {
+  const c = gc(clientId);
+  alert(`Fetching full transcript from Read.ai API...\n\nEndpoint: GET https://api.read.ai/v1/meetings/${meetingId}?expand[]=transcript\n\nIn the live version, this will:\n1. Pull the complete word-for-word transcript (not the email summary)\n2. Pass it to Claude for analysis\n3. Generate structured meeting notes\n4. Create tasks with due dates in the next 7 days\n5. Add them to the ${c.name} task board automatically`);
+}
+
+// ══════════════ TRANSCRIPT ══════════════
+
+function openTranscriptFor(cid) {
+  const sel=document.getElementById('tp-client');
+  sel.innerHTML='<option value="">Select client...</option>'+CLIENTS.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  if(cid) sel.value=cid;
+  openM('transcript');
+}
+
+function processTranscript() {
+  const text=document.getElementById('tp-text').value.trim();
+  const cid=document.getElementById('tp-client').value;
+  if(text.length<20){alert('Please paste a transcript first.');return;}
+  const c=gc(cid);
+  closeM('transcript');
+  const nowStr=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  alert(`✨ Processing transcript with AI...\n\nIn the live version, Claude will:\n1. Generate structured meeting notes with key decisions and discussion points\n2. Create a task list with specific action items assigned to you\n3. Set due dates within the next 7 days (from ${nowStr})\n4. Automatically add tasks to your board\n\nClient: ${c.name||'Not specified'}\nTranscript length: ${text.length} characters`);
+}
+
+// ══════════════ SETTINGS ══════════════
+
+function renderSettings() {
+  document.getElementById('team-list').innerHTML = TEAM.map(m=>`
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="width:34px;height:34px;border-radius:9px;background:${m.bg};color:${m.color};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">${m.initials}</div>
+      <div style="flex:1"><div style="font-size:13px;font-weight:500">${m.name}</div><div style="font-size:11px;color:var(--ts)">Active</div></div>
+      ${m.id==='u1'?`<span class="b fo">Owner</span>`:`<button class="btn xs" style="color:var(--red)">Remove</button>`}
+    </div>`).join('');
+
+  document.getElementById('integ-list').innerHTML = [
+    {name:'Gmail',               desc:'Auto-linking emails by domain',          ok:true},
+    {name:'Google Drive',        desc:'Agenda template connected',               ok:true},
+    {name:'Google Calendar',     desc:'Auto-agenda triggers active',             ok:true},
+    {name:'Read.ai API',         desc:READAI_KEY?'API key connected':'API key required', ok:!!READAI_KEY},
+    {name:'Read.ai (via Gmail)', desc:'Email summary detection active',          ok:true},
+  ].map(i=>`
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="flex:1"><div style="font-size:13px;font-weight:500">${i.name}</div><div style="font-size:12px;color:var(--ts)">${i.desc}</div></div>
+      ${i.ok?`<span class="b done">Active</span>`:
+        i.name==='Read.ai API'?`<span class="b n">Not connected</span><button class="btn xs p" onclick="nav('readai',null)">Connect</button>`
+        :`<span class="b n">Not connected</span><button class="btn xs p">Connect</button>`}
+    </div>`).join('');
+}
+
+// ══════════════ MODALS ══════════════
+
+function openM(id) {
+  if(id==='addTask') {
+    document.getElementById('nt-client').innerHTML='<option value="">— No client —</option>'+CLIENTS.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+    document.getElementById('nt-assignee').innerHTML=TEAM.map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
+    document.getElementById('nt-due').value=dn(3);
+  }
+  if(id==='newMeeting') {
+    document.getElementById('nm-client').innerHTML='<option value="">Select client...</option>'+CLIENTS.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+    document.getElementById('nm-date').value=dn(7);
+  }
+  document.getElementById('m-'+id).classList.add('open');
+}
+
+function closeM(id) { document.getElementById('m-'+id).classList.remove('open'); }
+
+function openTaskFor(cid) { openM('addTask'); document.getElementById('nt-client').value=cid; }
+
+function addClient() {
+  const name=document.getElementById('nc-name').value.trim();
+  if(!name){alert('Please enter a client name.');return;}
+  const svc=document.getElementById('nc-svc').value;
+  const svcMap={'Fractional Ops':'fo','Consulting':'co','Coaching':'ch'};
+  const palette=[['#5B4FCF','#EEF0FF'],['#0EA882','#E0F7F2'],['#E8920C','#FEF3E0'],['#1B6FD8','#E8F0FC'],['#2E8B57','#E8F5EE']];
+  const [color,bg]=palette[CLIENTS.length%palette.length];
+  CLIENTS.push({id:'c'+(CLIENTS.length+10),name,domain:document.getElementById('nc-domain').value.trim(),contact:document.getElementById('nc-contact').value.trim(),service:svc,svc:svcMap[svc]||'fo',color,bg});
+  closeM('addClient');
+  renderClients();
+  document.getElementById('nb-clients').textContent=CLIENTS.length;
+}
+
+function addTask() {
+  const title=document.getElementById('nt-title').value.trim();
+  if(!title){alert('Please enter a task title.');return;}
+  TASKS.unshift({id:'t'+Date.now(),title,client:document.getElementById('nt-client').value,assignee:document.getElementById('nt-assignee').value,due:document.getElementById('nt-due').value,priority:document.getElementById('nt-pri').value,status:document.getElementById('nt-status').value});
+  closeM('addTask');
+  renderTasks(window._tf||'all');
+  document.getElementById('nb-tasks').textContent=TASKS.filter(t=>t.status!=='done').length;
+}
+
+function addMeeting() {
+  const client=document.getElementById('nm-client').value;
+  if(!client){alert('Please select a client.');return;}
+  MEETINGS.push({id:'m'+Date.now(),client,date:document.getElementById('nm-date').value,type:document.getElementById('nm-type').value,approved:false});
+  closeM('newMeeting');
+  renderMeetings();
+  document.getElementById('nb-meetings').textContent=MEETINGS.length;
+}
+
+// Close modal on overlay click
+document.querySelectorAll('.overlay').forEach(o=>{
+  o.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
+});
+
+// ══════════════ INIT ══════════════
+renderDashboard();
+renderClients();
+</script>
+</body>
+</html>
