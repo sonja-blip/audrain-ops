@@ -517,25 +517,60 @@ a{color:inherit;text-decoration:none}
       <div class="lc"><div id="cal-all"></div></div>
     </section>
 
-    <!-- READ.AI -->
+    <!-- READ.AI / ZOOM TRANSCRIPTS -->
     <section class="page" id="page-readai">
-      <div class="ph"><div><div class="pt">Read.ai</div><div class="pst">Pull full transcripts — not just email summaries</div></div></div>
-      <div class="hint info" style="margin-bottom:18px"><span>ℹ️</span><div>The email you receive after a meeting only contains a <strong>summary</strong>. This integration pulls the <strong>full word-for-word transcript</strong> from the Read.ai API. Connect the shared API key below — it works for the entire team.</div></div>
-      <div class="card" style="margin-bottom:20px">
-        <div class="st" style="margin-bottom:6px">Read.ai API connection (shared)</div>
-        <div style="font-size:13px;color:var(--tm);margin-bottom:12px;line-height:1.6">Find your API key in Read.ai Settings → Integrations → API Keys. Save it once and the whole team can fetch full transcripts.</div>
-        <div id="readai-status"></div>
-        <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
-          <div style="flex:1;min-width:220px"><label class="flbl">Read.ai API key</label><input class="finput" id="readai-key-input" type="password" placeholder="sk_live_..." style="font-family:var(--mono)"></div>
-          <button class="btn p sm" onclick="saveReadAIKey()">Save key</button>
+      <div class="ph"><div><div class="pt">Transcripts</div><div class="pst">Zoom cloud recordings + manual paste — full transcripts for meeting notes and tasks</div></div></div>
+
+      <!-- Zoom connection -->
+      <div class="card" style="margin-bottom:18px">
+        <div class="st" style="margin-bottom:6px">🎥 Zoom cloud recordings</div>
+        <div style="font-size:13px;color:var(--tm);margin-bottom:12px;line-height:1.6">
+          Connect Zoom to automatically fetch full transcripts 30 minutes after each meeting ends.
+          The transcript is matched to the right client using the Zoom link in your calendar invite.
+          Make sure <strong>cloud recording</strong> and <strong>audio transcript</strong> are enabled in your Zoom settings.
+        </div>
+        <div id="zoom-status"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn p sm" id="zoom-connect-btn" onclick="connectZoom()">Connect Zoom</button>
+          <button class="btn sm" onclick="loadZoomRecordings()">🔄 Load recordings</button>
         </div>
       </div>
-      <div class="st" style="margin-bottom:12px">Recent meetings from Read.ai</div>
-      <div id="readai-meetings-list"><div class="hint warn">Connect your API key above to fetch recent meetings and full transcripts.</div></div>
+
+      <!-- Pending auto-fetches -->
+      <div id="zoom-pending-section" style="display:none;margin-bottom:18px">
+        <div class="st" style="margin-bottom:10px">⏳ Pending transcript fetches</div>
+        <div id="zoom-pending-list"></div>
+      </div>
+
+      <!-- Zoom recordings list -->
+      <div class="st" style="margin-bottom:12px">Recent Zoom recordings</div>
+      <div id="zoom-recordings-list">
+        <div class="hint info">Connect Zoom above to see your recent cloud recordings with transcripts.</div>
+      </div>
+
       <div class="divider"></div>
-      <div class="st" style="margin-bottom:8px">Manual transcript processing</div>
-      <div style="font-size:13px;color:var(--tm);margin-bottom:12px;line-height:1.6">Download the full transcript from <a href="https://app.read.ai" target="_blank" style="color:var(--blue)">app.read.ai</a> → select your meeting → Transcript tab → Download. Then paste it here.</div>
-      <button class="btn p sm" onclick="openM('transcript')">📋 Paste & process transcript</button>
+
+      <!-- Read.ai API key (kept for future when they support static keys) -->
+      <div class="card" style="margin-bottom:18px">
+        <div class="st" style="margin-bottom:6px">🎙️ Read.ai (future integration)</div>
+        <div style="font-size:13px;color:var(--tm);margin-bottom:10px;line-height:1.6">
+          Read.ai currently requires OAuth 2.1 and does not support static API keys. When they add static key support, paste it here and full Read.ai transcripts will be fetched automatically.
+        </div>
+        <div id="readai-status"></div>
+        <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+          <div style="flex:1;min-width:220px"><label class="flbl">Read.ai API key (when available)</label><input class="finput" id="readai-key-input" type="password" placeholder="sk_live_..." style="font-family:var(--mono)"></div>
+          <button class="btn sm" onclick="saveReadAIKey()">Save key</button>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Manual paste -->
+      <div class="st" style="margin-bottom:8px">📋 Manual transcript processing</div>
+      <div style="font-size:13px;color:var(--tm);margin-bottom:12px;line-height:1.6">
+        Download a transcript from Zoom or Read.ai and paste it here for instant processing into meeting notes and tasks.
+      </div>
+      <button class="btn p sm" onclick="openM('transcript')">Paste & process transcript</button>
     </section>
 
     <!-- SETTINGS -->
@@ -673,9 +708,9 @@ a{color:inherit;text-decoration:none}
 // ══════════════════════════════════════════════════
 // CONFIGURATION — REPLACE THESE TWO VALUES
 // ══════════════════════════════════════════════════
-const SUPABASE_URL = 'https://izuslolsrmrnuaskthjl.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml6dXNsb2xzcm1ybnVhc2t0aGpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3NjcwODMsImV4cCI6MjA4OTM0MzA4M30.F7a1L9Chd6navbshwuO386KaXsFtAxyrEPfRQcjuRVY';
-const BACKEND_URL = 'https://audrain-backend-production.up.railway.app'; // e.g. https://audrain-backend-production.up.railway.app
+const SUPABASE_URL = 'YOUR_SUPABASE_PROJECT_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const BACKEND_URL = 'YOUR_BACKEND_URL'; // e.g. https://audrain-backend-production.up.railway.app
 // ══════════════════════════════════════════════════
 
 if (!window.supabase) {
@@ -1530,13 +1565,110 @@ async function renderReadAI() {
   const statusEl = document.getElementById('readai-status');
   const keyEl = document.getElementById('readai-key-input');
   if(key) {
-    statusEl.innerHTML='<div class="hint ok" style="margin-bottom:10px">✓ API key connected — full transcripts available for the whole team</div>';
-    keyEl.value=key;
-    await loadReadAIMeetings();
-  } else {
-    statusEl.innerHTML='';
-    document.getElementById('readai-meetings-list').innerHTML='<div class="hint warn">Connect your API key above to fetch real meetings and full transcripts.</div>';
+    if(statusEl) statusEl.innerHTML='<div class="hint ok" style="margin-bottom:10px">✓ Read.ai key saved — will activate when static keys are supported</div>';
+    if(keyEl) keyEl.value=key;
   }
+  // Check Zoom connection
+  await checkZoomStatus();
+  // Load pending transcript jobs
+  await loadZoomPending();
+}
+
+async function checkZoomStatus() {
+  const statusEl = document.getElementById('zoom-status');
+  const connectBtn = document.getElementById('zoom-connect-btn');
+  if(!statusEl) return;
+  const { data } = await sb.from('zoom_tokens').select('id').eq('user_id', currentUser.id).single();
+  if(data) {
+    statusEl.innerHTML='<div class="hint ok" style="margin-bottom:10px">✓ Zoom connected — transcripts will auto-fetch 30 min after meetings end</div>';
+    if(connectBtn) { connectBtn.textContent = '✓ Reconnect Zoom'; connectBtn.className = 'btn sm'; }
+  } else {
+    statusEl.innerHTML='<div class="hint warn" style="margin-bottom:10px">Zoom not connected — connect to enable auto-transcript fetching</div>';
+  }
+}
+
+async function connectZoom() {
+  showLoading('Redirecting to Zoom...');
+  const result = await callBackend('/auth/zoom');
+  hideLoading();
+  if(result?.url) window.location.href = result.url;
+}
+
+async function loadZoomRecordings() {
+  document.getElementById('zoom-recordings-list').innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:12px;font-size:13px;color:var(--purple)"><div class="spinner"></div> Loading Zoom recordings...</div>';
+  const result = await callBackend('/zoom/recordings');
+  if(!result) {
+    document.getElementById('zoom-recordings-list').innerHTML = '<div class="hint warn">Could not load recordings — make sure Zoom is connected and cloud recording is enabled.</div>';
+    return;
+  }
+  const recordings = result.recordings || [];
+  if(!recordings.length) {
+    document.getElementById('zoom-recordings-list').innerHTML = '<div class="empty">No cloud recordings found in the last 30 days.<br>Make sure cloud recording is enabled in your Zoom settings.</div>';
+    return;
+  }
+  document.getElementById('zoom-recordings-list').innerHTML = recordings.map(r => {
+    const date = r.startTime ? fmtD(r.startTime.slice(0,10)) : '';
+    const dur = r.duration ? `${r.duration} min` : '';
+    return `<div class="mrow" style="margin-bottom:7px">
+      <div class="minit" style="background:var(--bl);color:var(--blue)">🎥</div>
+      <div class="minfo">
+        <div class="mname">${r.topic||'Meeting'}${r.clientName?` <span style="font-size:11px;color:var(--ts)">· ${r.clientName}</span>`:''}</div>
+        <div class="mmeta">${date} · ${dur} · ${r.hasTranscript?'<span style="color:var(--teal);font-weight:500">Transcript ready</span>':'<span style="color:var(--amber)">No transcript yet</span>'}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        ${r.hasTranscript
+          ? `<button class="btn sm p" onclick="fetchZoomTranscript('${r.id}','${r.clientId||''}')">Fetch & process</button>`
+          : `<button class="btn sm" onclick="scheduleZoomTranscript('${r.id}','${r.clientId||''}')">Schedule fetch</button>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function fetchZoomTranscript(meetingId, clientId) {
+  showLoading('Fetching Zoom transcript...');
+  const result = await callBackend(`/zoom/transcript/${meetingId}`);
+  hideLoading();
+  if(!result) return;
+  // Pre-populate the transcript modal
+  const sel = document.getElementById('tp-client');
+  sel.innerHTML='<option value="">Select client...</option>'+allClients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  if(clientId||result.clientId) sel.value = clientId||result.clientId;
+  document.getElementById('tp-text').value = result.fullTranscript||'';
+  toast(`Full Zoom transcript loaded — ${result.fullTranscript?.length||0} characters`,'ok');
+  openM('transcript');
+}
+
+async function scheduleZoomTranscript(meetingId, clientId) {
+  // Schedule fetch for 30 minutes from now (meeting just ended or hasn't ended yet)
+  const meetingEndTime = new Date().toISOString();
+  const result = await callBackend('/zoom/schedule-transcript','POST',{
+    meetingId, meetingEndTime, clientId: clientId||null
+  });
+  if(!result) return;
+  toast(`Transcript scheduled — will auto-fetch at ${new Date(result.fetchAfter).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}`,'ok');
+  await loadZoomPending();
+}
+
+async function loadZoomPending() {
+  const result = await callBackend('/zoom/pending');
+  const pending = result?.pending||[];
+  const section = document.getElementById('zoom-pending-section');
+  const list = document.getElementById('zoom-pending-list');
+  if(!section||!list) return;
+  if(!pending.length) { section.style.display='none'; return; }
+  section.style.display='block';
+  list.innerHTML = pending.map(p=>{
+    const fetchAt = new Date(p.fetch_after).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    const c = gc(p.client_id);
+    return `<div class="aitem">
+      <div class="aic time">⏳</div>
+      <div class="ab">
+        <div class="at2">Zoom transcript scheduled${c?` — ${c.name}`:''}</div>
+        <div class="as2">Will auto-fetch at ${fetchAt}</div>
+      </div>
+      <span class="b todo">Pending</span>
+    </div>`;
+  }).join('');
 }
 
 async function loadReadAIMeetings() {
@@ -1631,9 +1763,10 @@ async function renderSettings() {
       <span class="b ${p.role==='owner'?'fo':'n'}">${p.role||'member'}</span>
     </div>`).join('');
 
-  // Check if Google is connected for this user
   const { data: googleToken } = await sb.from('google_tokens').select('id').eq('user_id', currentUser.id).single();
+  const { data: zoomToken } = await sb.from('zoom_tokens').select('id').eq('user_id', currentUser.id).single();
   const googleConnected = !!googleToken;
+  const zoomConnected = !!zoomToken;
 
   const key=appSettings['readai_api_key']||'';
   document.getElementById('integ-list').innerHTML=[
@@ -1644,16 +1777,25 @@ async function renderSettings() {
       action: googleConnected ? null : `connectGoogle()`
     },
     {
+      name:'Zoom (cloud transcripts)',
+      desc: zoomConnected ? 'Connected — transcripts auto-fetch 30 min after meetings' : 'Not connected — click to authorize',
+      ok: zoomConnected,
+      action: zoomConnected ? null : `connectZoom()`
+    },
+    {
       name:'Read.ai API',
-      desc:key?'Full transcript fetching active':'API key required — go to Read.ai page',
-      ok:!!key,
-      action: !key ? `navTo('readai',null)` : null
+      desc:'Static API keys not yet supported by Read.ai — using Zoom transcripts instead',
+      ok: false,
+      action: null,
+      soon: true,
     },
   ].map(i=>`<div style="display:flex;align-items:center;gap:10px">
     <div style="flex:1"><div style="font-size:13px;font-weight:500">${i.name}</div><div style="font-size:12px;color:var(--ts)">${i.desc}</div></div>
     ${i.ok
       ? `<span class="b done">Connected ✓</span>`
-      : `<span class="b n">Not connected</span>${i.action?`<button class="btn xs p" onclick="${i.action}">Connect</button>`:''}`}
+      : i.soon
+        ? `<span class="b n">Coming soon</span>`
+        : `<span class="b n">Not connected</span>${i.action?`<button class="btn xs p" onclick="${i.action}">Connect</button>`:''}`}
   </div>`).join('');
 }
 
