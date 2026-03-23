@@ -1,0 +1,1765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audrain Advising — Operations Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
+<style>
+:root{
+  --purple:#5B4FCF;--pl:#EEF0FF;--pm:#8B82E0;--pd:#3D3491;
+  --teal:#0EA882;--tl:#E0F7F2;--amber:#E8920C;--al:#FEF3E0;
+  --red:#DC3545;--rl:#FDEAEC;--blue:#1B6FD8;--bl:#E8F0FC;--green:#2E8B57;--gl:#E8F5EE;
+  --g50:#F9F9FB;--g100:#F2F2F6;--g200:#E4E4EC;--g300:#C8C8D8;--g400:#9898B0;--g600:#5A5A72;
+  --bg:#FAFAFA;--sf:#FFF;--tx:#18182A;--tm:#5A5A72;--ts:#9898B0;
+  --br:#E4E4EC;--brh:#C8C8D8;--r:10px;--rs:6px;--rl2:14px;
+  --ss:0 1px 3px rgba(0,0,0,.06);--sm:0 4px 12px rgba(0,0,0,.08);--sl:0 8px 32px rgba(0,0,0,.12);
+  --font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--tx);font-size:14px;line-height:1.5;overflow:hidden;height:100vh}
+button,input,select,textarea{font-family:var(--font)}
+a{color:inherit;text-decoration:none}
+
+/* Shell */
+.shell{display:grid;grid-template-columns:228px 1fr;grid-template-rows:56px 1fr;height:100vh}
+
+/* Topbar */
+.topbar{grid-column:1/-1;background:var(--sf);border-bottom:1px solid var(--br);display:flex;align-items:center;padding:0 24px;gap:14px;z-index:50}
+.logo-mark{width:32px;height:32px;background:var(--purple);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;flex-shrink:0}
+.logo-text{font-size:15px;font-weight:600;letter-spacing:-.3px}.logo-text span{color:var(--purple)}
+.tb-div{width:1px;height:20px;background:var(--br)}
+.tb-sub{font-size:12px;color:var(--ts)}
+
+/* Search bar in topbar */
+.tb-search{flex:1;max-width:340px;position:relative}
+.tb-search input{width:100%;height:32px;border:1px solid var(--br);border-radius:var(--rs);padding:0 12px 0 32px;font-size:13px;background:var(--g50)}
+.tb-search input:focus{outline:none;border-color:var(--purple);background:var(--sf)}
+.tb-search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--ts);font-size:13px;pointer-events:none}
+.search-results{position:absolute;top:38px;left:0;right:0;background:var(--sf);border:1px solid var(--br);border-radius:var(--r);box-shadow:var(--sl);z-index:100;max-height:320px;overflow-y:auto;display:none}
+.search-results.open{display:block}
+.sr-item{padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--br);display:flex;align-items:center;gap:10px}
+.sr-item:last-child{border-bottom:none}
+.sr-item:hover{background:var(--g50)}
+.sr-type{font-size:10px;font-weight:600;padding:2px 7px;border-radius:99px;flex-shrink:0}
+.sr-title{font-size:13px;font-weight:500}
+.sr-sub{font-size:11px;color:var(--ts)}
+
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.notif-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--br);background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;position:relative}
+.notif-dot{position:absolute;top:5px;right:5px;width:8px;height:8px;background:var(--red);border-radius:50%;border:2px solid #fff}
+.user-pill{display:flex;align-items:center;gap:8px;padding:4px 10px 4px 4px;border-radius:99px;border:1px solid var(--br);cursor:pointer}
+.user-pill:hover{background:var(--g100)}
+.user-avatar{width:28px;height:28px;border-radius:50%;background:var(--pl);color:var(--purple);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;overflow:hidden}
+.user-name{font-size:12px;font-weight:500;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.signout-btn{font-size:12px;color:var(--tm);background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:var(--rs)}
+.signout-btn:hover{background:var(--g100);color:var(--red)}
+
+/* Sidebar */
+.sidebar{background:var(--sf);border-right:1px solid var(--br);padding:14px 10px;overflow-y:auto}
+.sb-sec{margin-bottom:18px}
+.sb-lbl{font-size:10px;font-weight:600;color:var(--ts);text-transform:uppercase;letter-spacing:.08em;padding:0 8px 5px}
+.nav{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--rs);cursor:pointer;font-size:13px;color:var(--tm);border:none;background:transparent;width:100%;text-align:left;transition:all .12s}
+.nav:hover{background:var(--g100);color:var(--tx)}
+.nav.active{background:var(--pl);color:var(--purple);font-weight:500}
+.nav-ic{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.nb{margin-left:auto;font-size:10px;font-weight:600;padding:1px 6px;border-radius:99px;background:var(--g100);color:var(--ts)}
+.nb.hot{background:var(--pl);color:var(--purple)}
+
+/* Main */
+.main{overflow-y:auto;padding:24px 28px}
+.page{display:none}
+.page.active{display:block;animation:fi .18s ease}
+@keyframes fi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+/* Loading */
+.loading-overlay{position:fixed;inset:0;background:rgba(255,255,255,.85);backdrop-filter:blur(3px);z-index:300;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px}
+.loading-overlay.hidden{display:none}
+.loading-spinner{width:36px;height:36px;border:3px solid var(--pl);border-top-color:var(--purple);border-radius:50%;animation:spin .7s linear infinite}
+.loading-text{font-size:14px;color:var(--tm);font-weight:500}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Toast */
+.toast-cont{position:fixed;bottom:24px;right:24px;z-index:400;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{background:var(--tx);color:#fff;padding:11px 16px;border-radius:var(--r);font-size:13px;font-weight:500;box-shadow:var(--sl);animation:toastIn .25s ease;max-width:320px;pointer-events:all}
+.toast.ok{background:#1a6640}.toast.err{background:#9b1c1c}
+@keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* Login */
+#login-screen{display:none;align-items:center;justify-content:center;height:100vh;background:linear-gradient(135deg,var(--pd) 0%,var(--purple) 60%,var(--pm) 100%)}
+.login-card{background:var(--sf);border-radius:20px;padding:48px 44px;width:400px;max-width:94vw;text-align:center;box-shadow:var(--sl)}
+.login-mark{width:56px;height:56px;background:var(--purple);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;margin:0 auto 20px;letter-spacing:-.5px}
+.login-title{font-size:22px;font-weight:700;letter-spacing:-.5px;margin-bottom:6px}.login-title span{color:var(--purple)}
+.login-sub{font-size:14px;color:var(--tm);margin-bottom:32px;line-height:1.5}
+.google-btn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:13px 20px;border-radius:var(--r);border:1.5px solid var(--br);background:var(--sf);cursor:pointer;font-size:14px;font-weight:500;transition:all .15s}
+.google-btn:hover{background:var(--g50);box-shadow:var(--ss)}
+.login-footer{font-size:12px;color:var(--ts);margin-top:24px;line-height:1.6}
+
+/* Page header */
+.ph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px}
+.pt{font-size:21px;font-weight:600;letter-spacing:-.5px}
+.pst{font-size:12px;color:var(--tm);margin-top:2px}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--rs);font-size:13px;font-weight:500;border:1px solid var(--br);background:var(--sf);color:var(--tx);cursor:pointer;transition:all .12s;white-space:nowrap}
+.btn:hover{background:var(--g100);border-color:var(--brh)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.p{background:var(--purple);color:#fff;border-color:var(--purple)}
+.btn.p:hover{background:var(--pd)}
+.btn.s{background:var(--teal);color:#fff;border-color:var(--teal)}
+.btn.s:hover{background:#0a8f6e}
+.btn.danger{color:var(--red);border-color:#f5c6cb;background:var(--rl)}
+.btn.sm{padding:5px 11px;font-size:12px}
+.btn.xs{padding:3px 7px;font-size:11px}
+
+/* Cards */
+.card{background:var(--sf);border:1px solid var(--br);border-radius:var(--rl2);padding:18px;box-shadow:var(--ss)}
+.card.click{cursor:pointer;transition:all .15s}
+.card.click:hover{box-shadow:var(--sm);border-color:var(--brh)}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.stat{background:var(--sf);border:1px solid var(--br);border-radius:var(--r);padding:16px 18px;box-shadow:var(--ss)}
+.sl2{font-size:11px;color:var(--tm);margin-bottom:5px;font-weight:500}
+.sv{font-size:26px;font-weight:600;letter-spacing:-1px;line-height:1;margin-bottom:3px}
+.ss3{font-size:11px;color:var(--ts)}
+.stat.acc{background:var(--purple);border-color:var(--purple)}
+.stat.acc .sl2{color:rgba(255,255,255,.7)}.stat.acc .sv{color:#fff}.stat.acc .ss3{color:rgba(255,255,255,.6)}
+
+/* Weekly digest */
+.digest{background:linear-gradient(135deg,var(--purple) 0%,var(--pd) 100%);border-radius:var(--rl2);padding:20px 24px;margin-bottom:22px;color:#fff;display:flex;align-items:center;gap:20px}
+.digest-icon{font-size:28px;flex-shrink:0}
+.digest-title{font-size:16px;font-weight:600;margin-bottom:4px}
+.digest-items{display:flex;gap:20px;flex-wrap:wrap;margin-top:8px}
+.digest-item{font-size:12px;opacity:.85;display:flex;align-items:center;gap:5px}
+.digest-item strong{font-weight:600;opacity:1}
+
+/* Badges */
+.b{display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:500;white-space:nowrap}
+.b.fo{background:var(--pl);color:var(--purple)}.b.co{background:var(--tl);color:#0a7a5f}
+.b.ch{background:var(--al);color:#b56d06}.b.todo{background:var(--al);color:#b56d06}
+.b.inprog{background:var(--bl);color:var(--blue)}.b.done{background:var(--gl);color:var(--green)}
+.b.overdue{background:var(--rl);color:var(--red)}.b.n{background:var(--g100);color:var(--tm)}
+.b.email{background:var(--bl);color:var(--blue)}.b.drive{background:var(--gl);color:var(--green)}
+.b.transcript{background:var(--pl);color:var(--purple)}
+
+/* Health score */
+.health{display:flex;align-items:center;gap:4px}
+.health-dot{width:8px;height:8px;border-radius:50%;background:var(--g300)}
+.health-dot.filled.h5{background:var(--teal)}.health-dot.filled.h3,.health-dot.filled.h4{background:var(--amber)}.health-dot.filled.h1,.health-dot.filled.h2{background:var(--red)}
+
+/* Welcome */
+.welcome{background:linear-gradient(135deg,var(--purple) 0%,var(--pd) 100%);border-radius:var(--rl2);padding:20px 24px;margin-bottom:20px;color:#fff;display:flex;align-items:center;justify-content:space-between}
+.wt{font-size:17px;font-weight:600;letter-spacing:-.3px;margin-bottom:3px}
+.ws{font-size:12px;opacity:.75}
+.wd{font-size:12px;opacity:.65;font-family:var(--mono)}
+
+/* Two col */
+.tc{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.st{font-size:13px;font-weight:600;margin-bottom:10px}
+
+/* Task list */
+.tlist{display:flex;flex-direction:column;gap:5px}
+.ti{display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--sf);border:1px solid var(--br);border-radius:var(--r);box-shadow:var(--ss);transition:border-color .1s}
+.ti:hover{border-color:var(--brh)}
+.tchk{width:17px;height:17px;border-radius:5px;border:2px solid var(--g300);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;font-size:10px;color:#fff}
+.tchk:hover{border-color:var(--purple)}.tchk.chk{background:var(--purple);border-color:var(--purple)}
+.pip{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.pip.high{background:var(--red)}.pip.med{background:var(--amber)}.pip.low{background:var(--teal)}
+.tb2{flex:1;min-width:0}
+.tt{font-size:13px;font-weight:500;margin-bottom:3px}
+.tt.done{text-decoration:line-through;color:var(--ts)}
+.tm3{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.tdue{font-size:11px;color:var(--ts)}.tdue.od{color:var(--red);font-weight:500}
+.task-edit-btn{opacity:0;font-size:11px;padding:2px 7px;border-radius:var(--rs);border:1px solid var(--br);background:transparent;cursor:pointer;color:var(--tm);transition:opacity .1s}
+.ti:hover .task-edit-btn{opacity:1}
+
+/* Activity */
+.afeed{display:flex;flex-direction:column;gap:7px}
+.aitem{display:flex;gap:10px;padding:11px 13px;background:var(--sf);border:1px solid var(--br);border-radius:var(--r);box-shadow:var(--ss)}
+.aic{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.aic.email{background:var(--bl);color:var(--blue)}.aic.task{background:var(--gl);color:var(--green)}
+.aic.meeting{background:var(--al);color:var(--amber)}.aic.note{background:var(--pl);color:var(--purple)}
+.aic.cal{background:var(--bl);color:var(--blue)}.aic.time{background:var(--tl);color:var(--teal)}
+.aic.transcript{background:var(--pl);color:var(--purple)}
+.ab{flex:1;min-width:0}.at2{font-size:13px;font-weight:500;margin-bottom:1px}.as2{font-size:12px;color:var(--tm)}
+.ati{font-size:11px;color:var(--ts);flex-shrink:0;white-space:nowrap;padding-top:1px}
+
+/* Tabs */
+.tabs{display:flex;border-bottom:1px solid var(--br);margin-bottom:18px}
+.tab{padding:8px 14px;cursor:pointer;font-size:13px;color:var(--tm);border-bottom:2px solid transparent;border-top:none;border-left:none;border-right:none;background:none;font-family:var(--font);transition:all .12s}
+.tab:hover:not(.active){color:var(--tx)}.tab.active{color:var(--purple);border-bottom-color:var(--purple);font-weight:500}
+
+/* Clients */
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:14px}
+.cinit{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;margin-bottom:12px}
+.cname{font-size:15px;font-weight:600;margin-bottom:2px;letter-spacing:-.2px}
+.cdom{font-size:12px;color:var(--tm);margin-bottom:8px;font-family:var(--mono)}
+.cfoot{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--br)}
+.cactions{display:flex;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--br)}
+
+/* Email rows */
+.erow{display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border-bottom:1px solid var(--br);cursor:pointer;transition:background .1s}
+.erow:last-child{border-bottom:none}.erow:hover{background:var(--g50)}
+.erow.unread .esubj{font-weight:600}
+.edot{width:7px;height:7px;background:var(--purple);border-radius:50%;flex-shrink:0;margin-top:5px}
+.edot.read{background:transparent}
+.efrom{font-size:13px;font-weight:500;width:150px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ebody{flex:1;min-width:0}.esubj{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+.eprev{font-size:11px;color:var(--ts);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.edate{font-size:11px;color:var(--ts);flex-shrink:0;padding-top:1px}
+
+/* Drive rows */
+.drow{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--br);cursor:pointer;transition:background .1s}
+.drow:last-child{border-bottom:none}.drow:hover{background:var(--g50)}
+.dic{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.dic.doc{background:var(--bl)}.dic.sheet{background:var(--gl)}.dic.pdf{background:var(--rl)}.dic.folder{background:var(--al)}
+.dname{font-size:13px;font-weight:500;flex:1}.ddate{font-size:11px;color:var(--ts)}
+
+/* Meeting rows */
+.mrow{display:flex;align-items:center;gap:12px;padding:13px 15px;background:var(--sf);border:1px solid var(--br);border-radius:var(--r);margin-bottom:7px;box-shadow:var(--ss)}
+.minit{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.minfo{flex:1;min-width:0}.mname{font-size:14px;font-weight:600;margin-bottom:2px}.mmeta{font-size:12px;color:var(--tm)}
+
+/* AI panel */
+.aipanel{background:#F4F3FF;border:1px solid #D0CEFF;border-radius:var(--r);padding:14px;margin-bottom:12px}
+.ailbl{font-size:10px;font-weight:600;color:var(--purple);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.agrow{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid #D0CEFF}
+.agrow:last-child{border-bottom:none}
+.agcb{accent-color:var(--purple);width:13px;height:13px;flex-shrink:0;margin-top:2px;cursor:pointer}
+.agtx{font-size:12px;color:#3D3491;flex:1;line-height:1.4}.agtm{font-size:11px;color:var(--pm);flex-shrink:0;font-family:var(--mono)}
+
+/* Meeting notes display */
+.notes-card{background:var(--g50);border:1px solid var(--br);border-radius:var(--r);padding:16px;margin-bottom:14px}
+.notes-section{margin-bottom:12px}.notes-section-title{font-size:11px;font-weight:600;color:var(--purple);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.notes-list{list-style:none}.notes-list li{font-size:13px;color:var(--tx);padding:3px 0 3px 14px;position:relative;line-height:1.5}
+.notes-list li::before{content:"·";position:absolute;left:0;color:var(--purple)}
+
+/* Workflow */
+.wfgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.wfstep{background:var(--sf);border:1px solid var(--br);border-radius:var(--rl2);padding:16px;box-shadow:var(--ss)}
+.wfstep.hl{border-color:var(--pm);border-width:1.5px}
+.wfbadge{display:inline-flex;background:var(--pl);color:var(--purple);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;padding:2px 8px;border-radius:99px;margin-bottom:8px}
+.wftitle{font-size:14px;font-weight:600;margin-bottom:4px}.wfdesc{font-size:12px;color:var(--tm);line-height:1.5;margin-bottom:10px}
+
+/* Calendar */
+.calrow{display:flex;align-items:center;gap:12px;padding:12px 15px;background:var(--sf);border:1px solid var(--br);border-radius:var(--r);margin-bottom:7px;box-shadow:var(--ss)}
+.calbullet{width:4px;border-radius:4px;align-self:stretch;flex-shrink:0;min-height:32px}
+.calinfo{flex:1;min-width:0}.caltitle{font-size:13px;font-weight:600;margin-bottom:2px}.calmeta{font-size:12px;color:var(--tm)}
+.cal-alert{display:flex;align-items:flex-start;gap:12px;padding:13px 15px;background:#FFF8E7;border:1px solid #F5D78E;border-radius:var(--r);margin-bottom:9px}
+.cal-alert.ready{background:#F0FDF4;border-color:#86EFAC}
+
+/* Time tracker */
+.timer-display{font-family:var(--mono);font-size:38px;font-weight:500;letter-spacing:2px;color:var(--purple);text-align:center;padding:18px 0 8px}
+.timer-display.running{color:var(--teal)}
+.timer-card{background:var(--sf);border:2px solid var(--br);border-radius:var(--rl2);padding:20px;text-align:center;margin-bottom:18px;box-shadow:var(--ss);transition:border-color .3s}
+.timer-card.running{border-color:var(--teal)}
+.te-row{display:flex;align-items:center;gap:10px;padding:10px 13px;background:var(--sf);border:1px solid var(--br);border-radius:var(--r);box-shadow:var(--ss)}
+.te-client{font-size:12px;font-weight:600;width:155px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.te-task{font-size:13px;flex:1}.te-dur{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--purple);flex-shrink:0;min-width:58px;text-align:right}
+.te-date{font-size:11px;color:var(--ts);flex-shrink:0;min-width:72px;text-align:right}
+.ms-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:12px;margin-bottom:20px}
+.ms-card{background:var(--sf);border:1px solid var(--br);border-radius:var(--r);padding:14px;box-shadow:var(--ss)}
+.ms-client{font-size:12px;font-weight:600;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ms-hours{font-size:22px;font-weight:600;letter-spacing:-.5px;color:var(--purple);font-family:var(--mono)}
+.ms-sub{font-size:11px;color:var(--ts);margin-top:2px}
+
+/* Timeline */
+.timeline{display:flex;flex-direction:column}
+.tl-item{display:flex;gap:12px;padding:10px 0;border-left:2px solid var(--br);margin-left:14px;padding-left:18px;position:relative}
+.tl-item::before{content:'';width:10px;height:10px;border-radius:50%;background:var(--sf);border:2px solid var(--br);position:absolute;left:-6px;top:16px}
+.tl-item.email::before{border-color:var(--blue);background:var(--blue-l)}.tl-item.task::before{border-color:var(--teal);background:var(--tl)}
+.tl-item.meeting::before{border-color:var(--amber);background:var(--al)}.tl-item.note::before{border-color:var(--purple);background:var(--pl)}
+.tl-item.transcript::before{border-color:var(--purple);background:var(--pl)}
+.tl-body{flex:1;min-width:0}.tl-title{font-size:13px;font-weight:500;margin-bottom:2px}.tl-sub{font-size:12px;color:var(--tm);line-height:1.5}
+.tl-date{font-size:11px;color:var(--ts);flex-shrink:0;white-space:nowrap}
+
+/* Forms */
+.frow{margin-bottom:14px}.flbl{display:block;font-size:12px;font-weight:500;color:var(--tm);margin-bottom:5px}
+.finput,.fsel,.ftarea{width:100%;height:36px;border:1px solid var(--br);border-radius:var(--rs);padding:0 11px;font-size:13px;font-family:var(--font);color:var(--tx);background:var(--sf);transition:border-color .12s}
+.finput:focus,.fsel:focus,.ftarea:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 3px rgba(91,79,207,.1)}
+.ftarea{height:auto;min-height:90px;padding:9px 11px;resize:vertical;line-height:1.5}
+.frow-in{display:flex;gap:10px;margin-bottom:14px}.frow-in>*{flex:1}
+.search-in{flex:1;min-width:180px;max-width:300px;height:34px;border:1px solid var(--br);border-radius:var(--rs);padding:0 11px 0 33px;font-size:13px;font-family:var(--font);background:var(--sf) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='%239898B0' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 10px center}
+.search-in:focus{outline:none;border-color:var(--purple)}
+.fsel-sm{height:34px;border:1px solid var(--br);border-radius:var(--rs);padding:0 9px;font-size:13px;font-family:var(--font);background:var(--sf);color:var(--tx);cursor:pointer;min-width:150px}
+.fsel-sm:focus{outline:none;border-color:var(--purple)}
+
+/* Modals */
+.overlay{display:none;position:fixed;inset:0;background:rgba(24,24,42,.4);backdrop-filter:blur(2px);z-index:200;align-items:center;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:var(--sf);border-radius:var(--rl2);padding:26px;width:500px;max-width:94vw;max-height:88vh;overflow-y:auto;box-shadow:var(--sl);border:1px solid var(--br)}
+.modal.lg{width:660px}.modal.xl{width:800px}
+.mhdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.mtitle{font-size:15px;font-weight:600;letter-spacing:-.3px}
+.mclose{width:28px;height:28px;border-radius:50%;border:1px solid var(--br);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--tm);line-height:1}
+.mclose:hover{background:var(--g100)}
+
+/* Hints */
+.hint{border-radius:var(--rs);padding:9px 13px;font-size:12px;margin-bottom:12px;display:flex;align-items:flex-start;gap:8px;line-height:1.5}
+.hint.info{background:var(--bl);border:1px solid #C5D9F5;color:#1558B8}
+.hint.ok{background:var(--gl);border:1px solid #A8D5BB;color:#246840}
+.hint.warn{background:var(--al);border:1px solid #F7D08A;color:#8B5B00}
+.hint.purple{background:var(--pl);border:1px solid #D0CEFF;color:var(--pd)}
+
+/* Misc */
+.lc{background:var(--sf);border:1px solid var(--br);border-radius:var(--rl2);overflow:hidden;box-shadow:var(--ss)}
+.divider{height:1px;background:var(--br);margin:20px 0}
+.empty{text-align:center;padding:36px 20px;color:var(--ts);font-size:13px}
+.back-btn{display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--purple);font-weight:500;cursor:pointer;background:none;border:none;margin-bottom:14px;font-family:var(--font)}
+.back-btn:hover{text-decoration:underline}
+.cdh{display:flex;align-items:center;gap:14px;margin-bottom:20px;padding-bottom:18px;border-bottom:1px solid var(--br)}
+.cdinit{width:50px;height:50px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0}
+.cdname{font-size:19px;font-weight:700;letter-spacing:-.4px;margin-bottom:2px}.cdmeta{font-size:13px;color:var(--tm)}
+.tlink{display:inline-flex;align-items:center;gap:6px;background:var(--bl);border:1px solid #C5D9F5;border-radius:var(--rs);padding:6px 11px;font-size:12px;color:var(--blue);font-weight:500}
+.tlink:hover{background:#D8E9FA}
+.spinner{display:inline-block;width:13px;height:13px;border:2px solid var(--pl);border-top-color:var(--purple);border-radius:50%;animation:spin .6s linear infinite}
+.note-card{background:var(--g50);border:1px solid var(--br);border-radius:var(--r);padding:13px;margin-bottom:8px}
+.note-tx{font-size:13px;line-height:1.6;margin-bottom:6px}.note-meta{font-size:11px;color:var(--ts);font-family:var(--mono)}
+.filter-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.tbl-hdr{display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--g50);border-bottom:1px solid var(--br)}
+.tbl-hdr span{font-size:11px;font-weight:600;color:var(--ts);text-transform:uppercase;letter-spacing:.06em}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loading-text">Loading...</div>
+</div>
+<div class="toast-cont" id="toast-cont"></div>
+
+<!-- LOGIN -->
+<div id="login-screen" style="display:none;align-items:center;justify-content:center;height:100vh;background:linear-gradient(135deg,var(--pd) 0%,var(--purple) 60%,var(--pm) 100%)">
+  <div class="login-card">
+    <div class="login-mark">AA</div>
+    <div class="login-title"><span>Audrain</span> Advising</div>
+    <div class="login-sub">Operations Platform<br>Sign in with your Google account to continue</div>
+    <button class="google-btn" onclick="signInWithGoogle()">
+      <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Continue with Google
+    </button>
+    <div class="login-footer">Access is restricted to Audrain Advising team members.</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="shell" id="app-shell" style="display:none">
+  <header class="topbar">
+    <div class="logo-mark">AA</div>
+    <div class="logo-text"><span>Audrain</span> Advising</div>
+    <div class="tb-div"></div>
+    <span class="tb-sub">Operations Platform</span>
+    <!-- Global search -->
+    <div class="tb-search" style="margin-left:16px">
+      <span class="tb-search-icon">🔍</span>
+      <input type="text" id="global-search" placeholder="Search clients, tasks, notes..." oninput="globalSearch(this.value)" onfocus="this.parentElement.querySelector('.search-results').classList.add('open')" onblur="setTimeout(()=>document.getElementById('search-results').classList.remove('open'),200)">
+      <div class="search-results" id="search-results"></div>
+    </div>
+    <div class="tb-right">
+      <button class="notif-btn">🔔<span class="notif-dot"></span></button>
+      <div class="user-pill">
+        <div class="user-avatar" id="user-avatar">AA</div>
+        <span class="user-name" id="user-name">Loading...</span>
+      </div>
+      <button class="signout-btn" onclick="signOut()">Sign out</button>
+    </div>
+  </header>
+
+  <nav class="sidebar">
+    <div class="sb-sec">
+      <div class="sb-lbl">Workspace</div>
+      <button class="nav active" onclick="navTo('dashboard',this)"><span class="nav-ic">🏠</span>Dashboard</button>
+      <button class="nav" onclick="navTo('clients',this)"><span class="nav-ic">🏢</span>Clients<span class="nb" id="nb-clients">0</span></button>
+    </div>
+    <div class="sb-sec">
+      <div class="sb-lbl">Work</div>
+      <button class="nav" onclick="navTo('tasks',this)"><span class="nav-ic">✅</span>Tasks<span class="nb hot" id="nb-tasks">0</span></button>
+      <button class="nav" onclick="navTo('meetings',this)"><span class="nav-ic">📅</span>Meetings<span class="nb" id="nb-meetings">0</span></button>
+      <button class="nav" onclick="navTo('time',this)"><span class="nav-ic">⏱️</span>Time Tracker</button>
+    </div>
+    <div class="sb-sec">
+      <div class="sb-lbl">Integrations</div>
+      <button class="nav" onclick="navTo('gmail',this)"><span class="nav-ic">✉️</span>Gmail<span class="nb hot" id="nb-gmail">0</span></button>
+      <button class="nav" onclick="navTo('drive',this)"><span class="nav-ic">📁</span>Drive</button>
+      <button class="nav" onclick="navTo('calendar',this)"><span class="nav-ic">🗓️</span>Calendar<span class="nb hot" id="nb-cal">0</span></button>
+      <button class="nav" onclick="navTo('transcripts',this)"><span class="nav-ic">🎙️</span>Transcripts</button>
+    </div>
+    <div class="sb-sec">
+      <div class="sb-lbl">Admin</div>
+      <button class="nav" onclick="navTo('settings',this)"><span class="nav-ic">⚙️</span>Settings</button>
+    </div>
+  </nav>
+
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <section class="page active" id="page-dashboard">
+      <div class="welcome">
+        <div><div class="wt" id="dash-greeting">Good morning</div><div class="ws">Audrain Advising · Operations Platform</div></div>
+        <div class="wd" id="dash-date"></div>
+      </div>
+      <!-- Weekly digest (Mondays) -->
+      <div id="dash-digest"></div>
+      <!-- Calendar alerts -->
+      <div id="dash-cal-alerts"></div>
+      <div class="stats">
+        <div class="stat acc"><div class="sl2">Active clients</div><div class="sv" id="dash-clients">—</div><div class="ss3" id="dash-clients-sub">loading...</div></div>
+        <div class="stat"><div class="sl2">Open tasks</div><div class="sv" id="dash-tasks-ct">—</div><div class="ss3" id="dash-tasks-sub">loading...</div></div>
+        <div class="stat"><div class="sl2">Unread emails</div><div class="sv" id="dash-emails">—</div><div class="ss3">Across all clients</div></div>
+        <div class="stat"><div class="sl2">Hours this month</div><div class="sv" id="dash-hrs">—</div><div class="ss3" id="dash-hrs-sub">this month</div></div>
+      </div>
+      <div class="tc">
+        <div><div class="st">My open tasks</div><div class="tlist" id="dash-tasks-list"></div><div style="margin-top:10px"><button class="btn sm" onclick="navTo('tasks',null)">View all →</button></div></div>
+        <div><div class="st">Recent activity</div><div class="afeed" id="dash-activity"></div></div>
+      </div>
+    </section>
+
+    <!-- CLIENTS -->
+    <section class="page" id="page-clients">
+      <div class="ph"><div><div class="pt">Clients</div><div class="pst" id="clients-subtitle">loading...</div></div><button class="btn p" onclick="openM('addClient')">+ Add client</button></div>
+      <div class="cgrid" id="clients-grid"></div>
+    </section>
+
+    <!-- CLIENT DETAIL -->
+    <section class="page" id="page-clientDetail">
+      <button class="back-btn" onclick="navTo('clients',null)">← Back to clients</button>
+      <div class="cdh" id="cd-header"></div>
+      <div class="tabs" id="cd-tabs">
+        <button class="tab active" onclick="cdTab(this,'cd-overview')">Overview</button>
+        <button class="tab" onclick="cdTab(this,'cd-timeline')">Timeline</button>
+        <button class="tab" onclick="cdTab(this,'cd-emails')">Emails</button>
+        <button class="tab" onclick="cdTab(this,'cd-drive')">Drive</button>
+        <button class="tab" onclick="cdTab(this,'cd-tasks')">Tasks</button>
+        <button class="tab" onclick="cdTab(this,'cd-notes')">Notes</button>
+        <button class="tab" onclick="cdTab(this,'cd-time')">Time</button>
+      </div>
+      <div id="cd-overview"></div>
+      <div id="cd-timeline" style="display:none"></div>
+      <div id="cd-emails" style="display:none"></div>
+      <div id="cd-drive" style="display:none"></div>
+      <div id="cd-tasks" style="display:none"></div>
+      <div id="cd-notes" style="display:none"></div>
+      <div id="cd-time" style="display:none"></div>
+    </section>
+
+    <!-- TASKS -->
+    <section class="page" id="page-tasks">
+      <div class="ph"><div><div class="pt">Tasks</div><div class="pst">All client and internal work</div></div><button class="btn p" onclick="openM('addTask')">+ Add task</button></div>
+      <div class="tabs">
+        <button class="tab active" onclick="filterTasksTab(this,'all')">All open</button>
+        <button class="tab" onclick="filterTasksTab(this,'mine')">Mine</button>
+        <button class="tab" onclick="filterTasksTab(this,'overdue')">Overdue</button>
+        <button class="tab" onclick="filterTasksTab(this,'done')">Done</button>
+      </div>
+      <div class="tlist" id="main-task-list"></div>
+    </section>
+
+    <!-- MEETINGS -->
+    <section class="page" id="page-meetings">
+      <div class="ph"><div><div class="pt">Meetings</div><div class="pst">AI-powered prep and follow-up</div></div><button class="btn p" onclick="openM('newMeeting')">+ Schedule meeting</button></div>
+      <div class="st">Upcoming meetings</div>
+      <div id="meetings-list" style="margin-bottom:22px"></div>
+      <div class="divider"></div>
+      <div class="st" style="margin-bottom:16px">AI meeting workflow</div>
+      <div id="meeting-workflow"></div>
+    </section>
+
+    <!-- TIME -->
+    <section class="page" id="page-time">
+      <div class="ph"><div><div class="pt">Time Tracker</div><div class="pst">Start/stop timer by client — syncs across the team</div></div>
+        <button class="btn sm" onclick="exportTimeCSV()">⬇ Export CSV</button>
+      </div>
+      <div class="timer-card" id="timer-card">
+        <div class="timer-display" id="timer-display">00:00:00</div>
+        <div style="display:flex;gap:10px;justify-content:center;margin-bottom:14px;flex-wrap:wrap">
+          <select class="fsel-sm" id="timer-client" style="min-width:190px"><option value="">Select client...</option></select>
+          <input class="finput" id="timer-task" placeholder="Project or task name..." style="max-width:260px;height:34px">
+        </div>
+        <div style="display:flex;gap:8px;justify-content:center">
+          <button class="btn p" id="timer-btn" onclick="toggleTimer()">▶ Start timer</button>
+          <button class="btn sm" onclick="discardTimer()" id="timer-discard" style="display:none">✕ Discard</button>
+        </div>
+      </div>
+      <div class="st" id="month-label-el">This month</div>
+      <div class="ms-grid" id="monthly-summary"></div>
+      <div class="filter-bar">
+        <div class="st" style="margin-bottom:0">Time entries</div>
+        <select class="fsel-sm" id="te-cf" onchange="loadTimeEntries()" style="margin-left:auto"><option value="">All clients</option></select>
+        <select class="fsel-sm" id="te-mf" onchange="loadTimeEntries()"></select>
+        <button class="btn sm" onclick="openM('addTime')">+ Manual entry</button>
+      </div>
+      <div class="lc">
+        <div class="tbl-hdr">
+          <span style="width:155px">Client</span><span style="flex:1">Project / task</span>
+          <span style="min-width:58px;text-align:right">Duration</span>
+          <span style="min-width:72px;text-align:right">Date</span>
+          <span style="min-width:60px;text-align:right">By</span>
+          <span style="width:32px"></span>
+        </div>
+        <div id="time-entries-list"></div>
+      </div>
+    </section>
+
+    <!-- GMAIL -->
+    <section class="page" id="page-gmail">
+      <div class="ph"><div><div class="pt">Gmail</div><div class="pst">Client emails auto-linked by domain</div></div>
+        <button class="btn sm" onclick="syncGmail()">🔄 Sync Gmail</button>
+      </div>
+      <div class="filter-bar">
+        <input type="text" class="search-in" id="gmail-search" placeholder="Search emails..." oninput="filterEmailsUI()">
+        <select class="fsel-sm" id="gmail-cf" onchange="filterEmailsUI()"><option value="">All clients</option></select>
+      </div>
+      <div class="lc"><div id="gmail-list"></div></div>
+    </section>
+
+    <!-- DRIVE -->
+    <section class="page" id="page-drive">
+      <div class="ph">
+        <div><div class="pt">Google Drive</div><div class="pst">Client documents and templates</div></div>
+        <a class="tlink" href="https://docs.google.com/document/d/1-2AfdYwvpt7lPWO-gR6JKL85Ezvgyh-ZgWipdunzjPI/edit" target="_blank">📄 Agenda template ↗</a>
+      </div>
+      <div class="filter-bar">
+        <select class="fsel-sm" id="drive-cf" onchange="filterDriveUI()"><option value="">All clients</option></select>
+        <button class="btn sm" onclick="syncDriveForClient()">🔄 Sync selected client</button>
+      </div>
+      <div class="lc"><div id="drive-list"></div></div>
+    </section>
+
+    <!-- CALENDAR -->
+    <section class="page" id="page-calendar">
+      <div class="ph">
+        <div><div class="pt">Google Calendar</div><div class="pst">Auto-agenda triggered 2 days before client meetings</div></div>
+        <button class="btn sm" onclick="syncCalendar()">🔄 Sync now</button>
+      </div>
+      <div class="hint purple" style="margin-bottom:18px"><span style="font-size:18px">🤖</span><div><strong>Auto-agenda workflow:</strong> When a client check-in appears within <strong>2 days</strong>, the platform reads your last notes and recent emails to suggest agenda items — ready for your approval.</div></div>
+      <div id="cal-alerts" style="margin-bottom:18px"></div>
+      <div class="tc" style="margin-bottom:20px">
+        <div><div class="st">Upcoming client meetings</div><div id="cal-upcoming"></div></div>
+        <div><div class="st">Auto-agenda queue</div><div id="cal-queue"></div></div>
+      </div>
+      <div class="divider"></div>
+      <div class="st" style="margin-bottom:6px">All synced events</div>
+      <div class="lc"><div id="cal-all"></div></div>
+    </section>
+
+    <!-- TRANSCRIPTS -->
+    <section class="page" id="page-transcripts">
+      <div class="ph"><div><div class="pt">Transcripts</div><div class="pst">Paste a meeting transcript — AI generates structured notes and tasks automatically</div></div></div>
+      <div class="hint info" style="margin-bottom:20px">
+        <span>ℹ️</span>
+        <div>After your meeting ends, download the transcript from Zoom (Recordings → Audio Transcript) or Read.ai (meeting → Transcript → Download). Paste the full text below. Claude will generate structured meeting notes and create tasks with due dates in your task board.</div>
+      </div>
+      <div class="card" style="margin-bottom:20px">
+        <div class="st" style="margin-bottom:12px">Process new transcript</div>
+        <div class="frow-in">
+          <div><label class="flbl">Client</label><select class="fsel" id="tr-client"></select></div>
+          <div><label class="flbl">Meeting (optional)</label><select class="fsel" id="tr-meeting"><option value="">— Select meeting —</option></select></div>
+        </div>
+        <div class="frow"><label class="flbl">Full transcript</label><textarea class="ftarea" id="tr-text" placeholder="Paste the complete transcript here — the more complete, the better the notes and tasks..." style="min-height:180px"></textarea></div>
+        <div id="tr-status"></div>
+        <button class="btn p" onclick="processTranscript()" id="tr-btn">✨ Generate notes + tasks</button>
+      </div>
+      <!-- Results appear here after processing -->
+      <div id="tr-results"></div>
+      <!-- History -->
+      <div class="divider"></div>
+      <div class="st" style="margin-bottom:12px">Processing history</div>
+      <div id="tr-history"></div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="page" id="page-settings">
+      <div class="ph"><div class="pt">Settings</div></div>
+      <div class="tc">
+        <div>
+          <div class="card" style="margin-bottom:14px">
+            <div class="st" style="margin-bottom:12px">Team members</div>
+            <div id="team-list" style="display:flex;flex-direction:column;gap:10px"><div class="empty">Loading...</div></div>
+          </div>
+          <div class="card">
+            <div class="st" style="margin-bottom:12px">Integration status</div>
+            <div id="integ-list" style="display:flex;flex-direction:column;gap:12px"></div>
+          </div>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:14px">
+            <div class="st" style="margin-bottom:6px">Agenda template</div>
+            <div style="font-size:13px;color:var(--tm);margin-bottom:10px;line-height:1.6">Connected Google Doc template used for all meeting agendas.</div>
+            <div class="hint ok" style="margin-bottom:10px">✓ Template connected</div>
+            <a class="tlink" href="https://docs.google.com/document/d/1-2AfdYwvpt7lPWO-gR6JKL85Ezvgyh-ZgWipdunzjPI/edit" target="_blank" style="display:inline-flex;margin-bottom:0">📄 View / edit template ↗</a>
+          </div>
+          <div class="card" style="margin-bottom:14px">
+            <div class="st" style="margin-bottom:10px">Calendar auto-agenda</div>
+            <div style="display:flex;flex-direction:column;gap:11px;font-size:13px">
+              <label style="display:flex;align-items:center;justify-content:space-between;gap:10px"><span>Days before meeting to trigger</span>
+                <select class="fsel-sm" id="trigger-days-sel" onchange="saveSettingVal('agenda_trigger_days',this.value)" style="width:75px;height:30px;font-size:12px;min-width:0"><option>1</option><option selected>2</option><option>3</option></select>
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" checked style="accent-color:var(--purple)"> Show dashboard alerts</label>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" checked style="accent-color:var(--purple)"> Auto-generate agenda suggestions</label>
+            </div>
+          </div>
+          <div class="card">
+            <div class="st" style="margin-bottom:10px">Notifications</div>
+            <div style="display:flex;flex-direction:column;gap:9px;font-size:13px">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" checked style="accent-color:var(--purple)"> New email linked to client</label>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" checked style="accent-color:var(--purple)"> Task assigned to me</label>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" checked style="accent-color:var(--purple)"> Task overdue</label>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" checked style="accent-color:var(--purple)"> Auto-agenda ready (2 days before)</label>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" style="accent-color:var(--purple)"> Weekly time summary email</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- MODALS -->
+<div class="overlay" id="m-addClient">
+  <div class="modal">
+    <div class="mhdr"><div class="mtitle" id="client-modal-title">Add new client</div><button class="mclose" onclick="closeM('addClient');resetClientModal()">×</button></div>
+    <div class="frow"><label class="flbl">Organization name</label><input class="finput" id="nc-name" placeholder="e.g. Inspire Academy"></div>
+    <div class="frow"><label class="flbl">Email domain (for Gmail auto-linking)</label><input class="finput" id="nc-domain" placeholder="e.g. inspireacademy.org"></div>
+    <div class="frow"><label class="flbl">Primary contact name</label><input class="finput" id="nc-contact" placeholder="Full name"></div>
+    <div class="frow"><label class="flbl">Service type</label><select class="fsel" id="nc-svc"><option>Fractional Ops</option><option>Consulting</option><option>Coaching</option></select></div>
+    <div class="frow"><label class="flbl">Google Drive folder URL (optional)</label><input class="finput" id="nc-drive" placeholder="Paste Drive folder link..."></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px">
+      <button class="btn sm" onclick="closeM('addClient');resetClientModal()">Cancel</button>
+      <button class="btn p sm" id="client-modal-btn" onclick="addClient()">Add client</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="m-addTask">
+  <div class="modal">
+    <div class="mhdr"><div class="mtitle" id="task-modal-title">Add task</div><button class="mclose" onclick="closeM('addTask');resetTaskModal()">×</button></div>
+    <div class="frow"><label class="flbl">Task title</label><input class="finput" id="nt-title" placeholder="What needs to be done?"></div>
+    <div class="frow"><label class="flbl">Client</label><select class="fsel" id="nt-client"></select></div>
+    <div class="frow-in">
+      <div><label class="flbl">Assign to</label><select class="fsel" id="nt-assignee"></select></div>
+      <div><label class="flbl">Due date</label><input type="date" class="finput" id="nt-due"></div>
+    </div>
+    <div class="frow-in">
+      <div><label class="flbl">Priority</label><select class="fsel" id="nt-pri"><option value="high">High</option><option value="med" selected>Medium</option><option value="low">Low</option></select></div>
+      <div><label class="flbl">Status</label><select class="fsel" id="nt-status"><option value="todo">To do</option><option value="inprog">In progress</option><option value="done">Done</option></select></div>
+    </div>
+    <div class="frow"><label class="flbl">Notes (optional)</label><textarea class="ftarea" id="nt-notes" style="min-height:60px" placeholder="Any context for this task..."></textarea></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px">
+      <button class="btn sm" onclick="closeM('addTask');resetTaskModal()">Cancel</button>
+      <button class="btn p sm" id="task-modal-btn" onclick="saveTask()">Add task</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="m-newMeeting">
+  <div class="modal">
+    <div class="mhdr"><div class="mtitle">Schedule meeting</div><button class="mclose" onclick="closeM('newMeeting')">×</button></div>
+    <div class="frow"><label class="flbl">Client</label><select class="fsel" id="nm-client"></select></div>
+    <div class="frow-in">
+      <div><label class="flbl">Date</label><input type="date" class="finput" id="nm-date"></div>
+      <div><label class="flbl">Type</label><select class="fsel" id="nm-type"><option>Check-in</option><option>Strategy</option><option>Review</option><option>Kickoff</option><option>Coaching</option></select></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px">
+      <button class="btn sm" onclick="closeM('newMeeting')">Cancel</button>
+      <button class="btn p sm" onclick="addMeeting()">Schedule</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="m-addTime">
+  <div class="modal">
+    <div class="mhdr"><div class="mtitle">Add time entry</div><button class="mclose" onclick="closeM('addTime')">×</button></div>
+    <div class="frow"><label class="flbl">Client</label><select class="fsel" id="ate-client"></select></div>
+    <div class="frow"><label class="flbl">Project or task name</label><input class="finput" id="ate-task" placeholder="e.g. Strategy call, Ops review..."></div>
+    <div class="frow-in">
+      <div><label class="flbl">Date</label><input type="date" class="finput" id="ate-date"></div>
+      <div><label class="flbl">Duration (hours)</label><input type="number" class="finput" id="ate-hrs" placeholder="1.5" step="0.25" min="0.25"></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px">
+      <button class="btn sm" onclick="closeM('addTime')">Cancel</button>
+      <button class="btn p sm" onclick="addManualTime()">Save entry</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="m-deleteClient">
+  <div class="modal">
+    <div class="mhdr"><div class="mtitle">Delete client</div><button class="mclose" onclick="closeM('deleteClient')">×</button></div>
+    <div class="hint warn" style="margin-bottom:16px">⚠️ This will archive the client and hide them from the platform. Their data (tasks, notes, time entries) is preserved but not visible. This cannot be easily undone.</div>
+    <div style="font-size:14px;margin-bottom:20px">Are you sure you want to delete <strong id="delete-client-name"></strong>?</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn sm" onclick="closeM('deleteClient')">Cancel</button>
+      <button class="btn sm danger" onclick="confirmDeleteClient()">Delete client</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// CONFIG — REPLACE THESE THREE VALUES
+// ══════════════════════════════════════════
+const SUPABASE_URL = 'YOUR_SUPABASE_PROJECT_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const BACKEND_URL = 'YOUR_BACKEND_URL';
+// ══════════════════════════════════════════
+
+if (!window.supabase) {
+  document.getElementById('loading-overlay').innerHTML = '<div style="text-align:center;padding:40px"><div style="font-size:32px;margin-bottom:16px">⚠️</div><div style="font-size:16px;font-weight:600;margin-bottom:8px">Failed to load</div><div style="font-size:13px;color:#666">Try hard refresh: Cmd+Shift+R</div></div>';
+  throw new Error('Supabase not loaded');
+}
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const TEMPLATE_URL = 'https://docs.google.com/document/d/1-2AfdYwvpt7lPWO-gR6JKL85Ezvgyh-ZgWipdunzjPI/edit';
+
+// ── State ──
+let currentUser = null, currentProfile = null;
+let allClients=[], allProfiles=[], allTasks=[], allMeetings=[];
+let allEmails=[], allDriveFiles=[], allCalEvents=[], allTimeEntries=[];
+let appSettings={}, taskFilter='all', editingTaskId=null, editingClientId=null, deletingClientId=null;
+let timerInterval=null, timerStart=null, timerSeconds=0, timerRunning=false;
+
+const today = new Date();
+const todayStr = today.toISOString().slice(0,10);
+const dn = n => { const d=new Date(today); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
+const fmtD = d => { if(!d)return''; const dt=new Date(d+'T12:00:00'); return dt.toLocaleDateString('en-US',{month:'short',day:'numeric'}); };
+const fmtDLong = d => { if(!d)return''; const dt=new Date(d+'T12:00:00'); return dt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}); };
+const fmtTS = ts => { if(!ts)return''; const d=new Date(ts); const diff=Math.round((Date.now()-d.getTime())/60000); return diff<1?'Just now':diff<60?`${diff}m ago`:diff<1440?`${Math.round(diff/60)}h ago`:fmtD(ts.slice(0,10)); };
+const isOD = (due,status) => due && due < todayStr && status!=='done';
+const inits = name => (name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+const fmtHrs = s => `${String(Math.floor(s/3600)).padStart(2,'0')}:${String(Math.floor((s%3600)/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+const fmtDur = s => { const h=Math.floor(s/3600),m=Math.floor((s%3600)/60); return h>0?`${h}h ${m}m`:`${m}m`; };
+const gc = id => allClients.find(c=>c.id===id);
+const gp = id => allProfiles.find(p=>p.id===id);
+const svcClass = svc => ({'Fractional Ops':'fo','Consulting':'co','Coaching':'ch'}[svc]||'fo');
+
+// ── Toast & loading ──
+function showLoading(text='Loading...') { document.getElementById('loading-overlay').classList.remove('hidden'); document.getElementById('loading-text').textContent=text; }
+function hideLoading() { document.getElementById('loading-overlay').classList.add('hidden'); }
+function toast(msg, type='') {
+  const c=document.getElementById('toast-cont'), t=document.createElement('div');
+  t.className=`toast ${type}`; t.textContent=msg; c.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},3500);
+}
+
+// ── Backend API ──
+async function callBackend(path, method='GET', body=null) {
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){toast('Please sign in first','err');return null;}
+  const opts={method,headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`}};
+  if(body)opts.body=JSON.stringify(body);
+  try{
+    const res=await fetch(BACKEND_URL+path,opts);
+    const data=await res.json();
+    if(!res.ok){
+      if(data.error==='google_not_connected'){toast('Google not connected — go to Settings','err');}
+      else{toast(data.error||'Server error','err');}
+      return null;
+    }
+    return data;
+  }catch(err){toast('Could not reach backend server','err');return null;}
+}
+
+// ── Auth ──
+async function initAuth() {
+  showLoading('Checking sign in...');
+  const {data:{session}}=await sb.auth.getSession();
+  if(session){await onSignedIn(session.user);}
+  else{hideLoading();document.getElementById('login-screen').style.display='flex';}
+  sb.auth.onAuthStateChange(async(event,session)=>{
+    if(event==='SIGNED_IN'&&session){await onSignedIn(session.user);}
+    else if(event==='SIGNED_OUT'){document.getElementById('app-shell').style.display='none';document.getElementById('login-screen').style.display='flex';currentUser=null;}
+  });
+}
+
+async function onSignedIn(user) {
+  currentUser=user;
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app-shell').style.display='grid';
+  showLoading('Loading your workspace...');
+  await loadProfile();
+  await loadAllData();
+  updateUserUI();
+  renderDashboard();
+  hideLoading();
+}
+
+async function loadProfile() {
+  const{data}=await sb.from('profiles').select('*').eq('id',currentUser.id).single();
+  currentProfile=data;
+}
+
+async function signInWithGoogle() {
+  showLoading('Redirecting to Google...');
+  const{error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.href}});
+  if(error){hideLoading();toast('Sign in failed: '+error.message,'err');}
+}
+
+async function signOut(){await sb.auth.signOut();toast('Signed out');}
+
+function updateUserUI() {
+  if(!currentProfile)return;
+  const name=currentProfile.full_name||currentProfile.email||'User';
+  document.getElementById('user-name').textContent=name;
+  const av=document.getElementById('user-avatar');
+  if(currentProfile.avatar_url){av.innerHTML=`<img src="${currentProfile.avatar_url}" style="width:28px;height:28px;border-radius:50%;object-fit:cover">`;}
+  else{av.textContent=inits(name);}
+  const hr=today.getHours();
+  const greeting=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
+  const fname=(currentProfile.full_name||'').split(' ')[0]||'there';
+  document.getElementById('dash-greeting').textContent=`${greeting}, ${fname}`;
+  document.getElementById('dash-date').textContent=today.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+}
+
+// ── Load all data ──
+async function loadAllData() {
+  const[clients,profiles,tasks,meetings,emails,drive,cal,time,settings]=await Promise.all([
+    sb.from('clients').select('*').eq('active',true).order('name'),
+    sb.from('profiles').select('*').order('full_name'),
+    sb.from('tasks').select('*').order('created_at',{ascending:false}),
+    sb.from('meetings').select('*').order('meeting_date'),
+    sb.from('emails').select('*').order('received_at',{ascending:false}),
+    sb.from('drive_files').select('*').order('modified_at',{ascending:false}),
+    sb.from('calendar_events').select('*').order('event_date'),
+    sb.from('time_entries').select('*').order('entry_date',{ascending:false}),
+    sb.from('settings').select('*'),
+  ]);
+  allClients=clients.data||[]; allProfiles=profiles.data||[]; allTasks=tasks.data||[];
+  allMeetings=meetings.data||[]; allEmails=emails.data||[]; allDriveFiles=drive.data||[];
+  allCalEvents=cal.data||[]; allTimeEntries=time.data||[];
+  appSettings={}; (settings.data||[]).forEach(s=>appSettings[s.key]=s.value);
+  updateBadges();
+}
+
+function updateBadges() {
+  document.getElementById('nb-clients').textContent=allClients.length;
+  document.getElementById('nb-tasks').textContent=allTasks.filter(t=>t.status!=='done').length;
+  document.getElementById('nb-meetings').textContent=allMeetings.filter(m=>m.status==='scheduled').length;
+  document.getElementById('nb-gmail').textContent=allEmails.filter(e=>e.is_unread).length;
+  document.getElementById('nb-cal').textContent=allCalEvents.filter(e=>e.agenda_triggered).length;
+}
+
+// ── Navigation ──
+function navTo(id, el) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(el){el.classList.add('active');}
+  else{document.querySelectorAll('.nav').forEach(n=>{if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes(`'${id}'`))n.classList.add('active');});}
+  const renders={dashboard:renderDashboard,clients:renderClients,tasks:()=>renderTasks(),meetings:renderMeetings,time:renderTimePage,gmail:renderGmail,drive:renderDrive,calendar:renderCalendar,transcripts:renderTranscripts,settings:renderSettings};
+  if(renders[id])renders[id]();
+}
+
+// ── Client health score ──
+function clientHealth(clientId) {
+  const now=Date.now();
+  let score=5;
+  // Deduct for no recent email (>14 days)
+  const emails=allEmails.filter(e=>e.client_id===clientId);
+  if(emails.length===0)score-=2;
+  else{const last=new Date(emails[0].received_at||0).getTime();if(now-last>14*86400000)score-=1;}
+  // Deduct for overdue tasks
+  const overdue=allTasks.filter(t=>t.client_id===clientId&&isOD(t.due_date,t.status));
+  if(overdue.length>2)score-=2;else if(overdue.length>0)score-=1;
+  // Deduct for no recent meeting
+  const meetings=allMeetings.filter(m=>m.client_id===clientId&&m.status==='scheduled');
+  if(meetings.length===0)score-=1;
+  return Math.max(1,Math.min(5,score));
+}
+
+function healthHTML(clientId) {
+  const s=clientHealth(clientId);
+  const cls=s>=4?'h5':s>=3?'h3':s>=2?'h3':'h1';
+  return `<div class="health">${[1,2,3,4,5].map(i=>`<div class="health-dot ${i<=s?'filled '+cls:''}"></div>`).join('')}</div>`;
+}
+
+// ── Task HTML ──
+function taskHTML(t) {
+  const c=gc(t.client_id);
+  const p=gp(t.assignee_id);
+  const od=isOD(t.due_date,t.status);
+  const done=t.status==='done';
+  const svc=c?svcClass(c.service_type):'';
+  return `<div class="ti">
+    <div class="tchk ${done?'chk':''}" onclick="toggleTask('${t.id}')">${done?'✓':''}</div>
+    <div class="pip ${t.priority||'med'}"></div>
+    <div class="tb2">
+      <div class="tt ${done?'done':''}">${t.title}</div>
+      <div class="tm3">
+        ${c?`<span class="b ${svc}" style="background:${c.bg_color};color:${c.color}">${c.name}</span>`:''}
+        <span class="tdue ${od?'od':''}">${t.due_date?'Due '+fmtD(t.due_date):''}</span>
+        <span style="font-size:11px;color:var(--ts)">· ${p?(p.full_name||p.email||'?').split(' ')[0]:'Unassigned'}</span>
+        <span class="b ${t.status}">${t.status==='todo'?'To do':t.status==='inprog'?'In progress':'Done'}</span>
+        ${t.source==='transcript'?`<span class="b transcript">From transcript</span>`:''}
+      </div>
+    </div>
+    <button class="task-edit-btn" onclick="openEditTask('${t.id}')">Edit</button>
+  </div>`;
+}
+
+async function toggleTask(id) {
+  const t=allTasks.find(x=>x.id===id); if(!t)return;
+  const newStatus=t.status==='done'?'todo':'done';
+  const{error}=await sb.from('tasks').update({status:newStatus,completed_at:newStatus==='done'?new Date().toISOString():null}).eq('id',id);
+  if(error){toast('Failed to update task','err');return;}
+  t.status=newStatus;
+  updateBadges(); renderTasks(); renderDashboard();
+  if(newStatus==='done')logActivity('task','Task completed',t.title,t.client_id);
+}
+
+// ── Dashboard ──
+function renderDashboard() {
+  const open=allTasks.filter(t=>t.status!=='done');
+  const od=open.filter(t=>isOD(t.due_date,t.status));
+  const unread=allEmails.filter(e=>e.is_unread);
+  const curMonth=today.toISOString().slice(0,7);
+  const monthSecs=allTimeEntries.filter(e=>e.month_key===curMonth).reduce((a,e)=>a+e.duration_seconds,0);
+
+  document.getElementById('dash-clients').textContent=allClients.length;
+  document.getElementById('dash-clients-sub').textContent=allMeetings.filter(m=>m.status==='scheduled').length+' meetings scheduled';
+  document.getElementById('dash-tasks-ct').textContent=open.length;
+  document.getElementById('dash-tasks-sub').textContent=od.length>0?`${od.length} overdue`:'All on track';
+  document.getElementById('dash-emails').textContent=unread.length;
+  document.getElementById('dash-hrs').textContent=monthSecs>0?(monthSecs/3600).toFixed(1)+'h':'0h';
+  document.getElementById('dash-hrs-sub').textContent=today.toLocaleDateString('en-US',{month:'long'});
+
+  // Weekly digest (show on Mondays or always for demo)
+  const isMonday=today.getDay()===1;
+  const digestEl=document.getElementById('dash-digest');
+  if(isMonday||true) { // show always so you can see it
+    const mtgsThisWeek=allCalEvents.filter(e=>{const d=new Date(e.event_date+'T12:00:00');const diff=Math.round((d-today)/86400000);return diff>=0&&diff<=6;}).length;
+    const overdueCount=od.length;
+    const staleClients=allClients.filter(c=>{const lastEmail=allEmails.filter(e=>e.client_id===c.id)[0];return!lastEmail||Date.now()-new Date(lastEmail.received_at||0).getTime()>14*86400000;}).length;
+    const weekHrs=allTimeEntries.filter(e=>{const d=new Date(e.entry_date+'T12:00:00');return Date.now()-d.getTime()<7*86400000;}).reduce((a,e)=>a+e.duration_seconds,0);
+    digestEl.innerHTML=`<div class="digest">
+      <div class="digest-icon">📋</div>
+      <div>
+        <div class="digest-title">Weekly overview${isMonday?' — Good morning, here\'s your week':''}</div>
+        <div class="digest-items">
+          <div class="digest-item">📅 <strong>${mtgsThisWeek}</strong> meeting${mtgsThisWeek!==1?'s':''} this week</div>
+          <div class="digest-item">✅ <strong>${overdueCount}</strong> overdue task${overdueCount!==1?'s':''}</div>
+          <div class="digest-item">💬 <strong>${staleClients}</strong> client${staleClients!==1?'s':''} not contacted in 14+ days</div>
+          <div class="digest-item">⏱️ <strong>${(weekHrs/3600).toFixed(1)}h</strong> logged this week</div>
+        </div>
+      </div>
+    </div>`;
+  }else{digestEl.innerHTML='';}
+
+  // Calendar alerts
+  const triggers=allCalEvents.filter(e=>e.agenda_triggered);
+  document.getElementById('dash-cal-alerts').innerHTML=triggers.map(e=>{
+    const c=gc(e.client_id);
+    const daysUntil=e.event_date?Math.round((new Date(e.event_date+'T12:00:00')-today)/86400000):0;
+    return `<div class="cal-alert ${e.agenda_ready?'ready':''}">
+      <span style="font-size:20px">${e.agenda_ready?'✅':'🗓️'}</span>
+      <div style="flex:1"><div style="font-size:13px;font-weight:600;margin-bottom:2px">${e.agenda_ready?'Agenda ready for approval':'Auto-agenda triggered'} — ${c?c.name:'Client'}</div>
+      <div style="font-size:12px;color:var(--tm)">${e.meeting_type} in ${daysUntil} day${daysUntil!==1?'s':''} · ${fmtD(e.event_date)} at ${e.event_time||''}</div></div>
+      <button class="btn sm ${e.agenda_ready?'s':'p'}" onclick="navTo('meetings',null)">${e.agenda_ready?'Review agenda':'Generate agenda'}</button>
+    </div>`;
+  }).join('');
+
+  const mine=allTasks.filter(t=>t.assignee_id===currentUser?.id&&t.status!=='done').slice(0,4);
+  document.getElementById('dash-tasks-list').innerHTML=mine.map(taskHTML).join('')||'<div class="empty">All caught up! 🎉</div>';
+  loadActivity();
+}
+
+async function loadActivity() {
+  const{data}=await sb.from('activity_log').select('*').order('created_at',{ascending:false}).limit(6);
+  const icons={email:'✉️',task:'✅',meeting:'📅',note:'📝',cal:'🗓️',time:'⏱️',transcript:'🎙️'};
+  document.getElementById('dash-activity').innerHTML=(data||[]).map(a=>`
+    <div class="aitem">
+      <div class="aic ${a.type}">${icons[a.type]||'•'}</div>
+      <div class="ab"><div class="at2">${a.title}</div><div class="as2">${a.subtitle||''}</div></div>
+      <div class="ati">${fmtTS(a.created_at)}</div>
+    </div>`).join('')||'<div class="empty">No activity yet</div>';
+}
+
+async function logActivity(type,title,subtitle,clientId) {
+  await sb.from('activity_log').insert({type,title,subtitle,client_id:clientId||null,user_id:currentUser?.id});
+}
+
+// ── Clients ──
+function renderClients() {
+  document.getElementById('clients-subtitle').textContent=`${allClients.length} active client engagement${allClients.length!==1?'s':''}`;
+  document.getElementById('clients-grid').innerHTML=allClients.map(c=>{
+    const openTasks=allTasks.filter(t=>t.client_id===c.id&&t.status!=='done').length;
+    const unread=allEmails.filter(e=>e.client_id===c.id&&e.is_unread).length;
+    const svc=svcClass(c.service_type);
+    const health=healthHTML(c.id);
+    return `<div class="card" style="position:relative">
+      <div style="cursor:pointer" onclick="showClientDetail('${c.id}')">
+        <div class="cinit" style="background:${c.bg_color};color:${c.color}">${inits(c.name)}</div>
+        <div class="cname">${c.name}</div>
+        <div class="cdom">${c.domain||''}</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span class="b ${svc}">${c.service_type}</span>
+          ${health}
+        </div>
+        <div class="cfoot">
+          <span class="b email">Gmail</span>
+          <span class="b drive">Drive</span>
+          <span style="margin-left:auto;font-size:11px;color:var(--ts)">${openTasks} task${openTasks!==1?'s':''} · ${unread} unread</span>
+        </div>
+      </div>
+      <div class="cactions">
+        <button class="btn sm" style="flex:1" onclick="openEditClient('${c.id}')">✏️ Edit</button>
+        <button class="btn sm danger" onclick="openDeleteClient('${c.id}','${c.name.replace(/'/g,"\\'")}')">Delete</button>
+      </div>
+    </div>`;
+  }).join('')||'<div class="empty" style="grid-column:1/-1">No clients yet — add your first one</div>';
+}
+
+function openEditClient(id) {
+  const c=gc(id); if(!c)return;
+  editingClientId=id;
+  document.getElementById('client-modal-title').textContent='Edit client';
+  document.getElementById('client-modal-btn').textContent='Save changes';
+  document.getElementById('nc-name').value=c.name;
+  document.getElementById('nc-domain').value=c.domain||'';
+  document.getElementById('nc-contact').value=c.contact_name||'';
+  document.getElementById('nc-svc').value=c.service_type;
+  document.getElementById('nc-drive').value=c.drive_folder_url||'';
+  openM('addClient');
+}
+
+function openDeleteClient(id, name) {
+  deletingClientId=id;
+  document.getElementById('delete-client-name').textContent=name;
+  openM('deleteClient');
+}
+
+async function confirmDeleteClient() {
+  if(!deletingClientId)return;
+  const{error}=await sb.from('clients').update({active:false}).eq('id',deletingClientId);
+  if(error){toast('Failed to delete','err');return;}
+  allClients=allClients.filter(c=>c.id!==deletingClientId);
+  deletingClientId=null;
+  closeM('deleteClient');
+  toast('Client removed','ok');
+  renderClients(); updateBadges();
+}
+
+function resetClientModal() {
+  editingClientId=null;
+  document.getElementById('client-modal-title').textContent='Add new client';
+  document.getElementById('client-modal-btn').textContent='Add client';
+  document.getElementById('nc-name').value='';document.getElementById('nc-domain').value='';
+  document.getElementById('nc-contact').value='';document.getElementById('nc-drive').value='';
+}
+
+async function addClient() {
+  const name=document.getElementById('nc-name').value.trim();
+  if(!name){toast('Please enter a client name','err');return;}
+  const svc=document.getElementById('nc-svc').value;
+  const payload={name,domain:document.getElementById('nc-domain').value.trim(),contact_name:document.getElementById('nc-contact').value.trim(),service_type:svc,drive_folder_url:document.getElementById('nc-drive').value.trim()};
+
+  if(editingClientId) {
+    const{error}=await sb.from('clients').update(payload).eq('id',editingClientId);
+    if(error){toast('Failed to save: '+error.message,'err');return;}
+    const c=allClients.find(x=>x.id===editingClientId);
+    if(c)Object.assign(c,payload);
+    toast(`${name} updated ✓`,'ok');
+  } else {
+    const palette=[['#5B4FCF','#EEF0FF'],['#0EA882','#E0F7F2'],['#E8920C','#FEF3E0'],['#1B6FD8','#E8F0FC'],['#2E8B57','#E8F5EE']];
+    const[color,bg]=palette[allClients.length%palette.length];
+    const{data,error}=await sb.from('clients').insert({...payload,color,bg_color:bg,created_by:currentUser.id}).select().single();
+    if(error){toast('Failed to add: '+error.message,'err');return;}
+    allClients.push(data);
+    logActivity('note','New client added',name,data.id);
+    toast(`${name} added ✓`,'ok');
+  }
+  closeM('addClient'); resetClientModal(); renderClients(); updateBadges();
+}
+
+// ── Client detail ──
+async function showClientDetail(id) {
+  const c=gc(id); if(!c)return;
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-clientDetail').classList.add('active');
+  const svc=svcClass(c.service_type);
+
+  document.getElementById('cd-header').innerHTML=`
+    <div class="cdinit" style="background:${c.bg_color};color:${c.color}">${inits(c.name)}</div>
+    <div style="flex:1">
+      <div class="cdname">${c.name}</div>
+      <div class="cdmeta">${c.domain||''} · <span class="b ${svc}">${c.service_type}</span> · ${healthHTML(id)}</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn sm" onclick="openEditClient('${c.id}')">✏️ Edit</button>
+      <button class="btn sm" onclick="openMeetingFor('${c.id}')">📅 Prep meeting</button>
+      <button class="btn sm p" onclick="openTaskFor('${c.id}')">+ Task</button>
+      <button class="btn sm" onclick="openTimeFor('${c.id}')">⏱️ Log time</button>
+    </div>`;
+
+  const cEmails=allEmails.filter(e=>e.client_id===id);
+  const cTasks=allTasks.filter(t=>t.client_id===id);
+  const cFiles=allDriveFiles.filter(f=>f.client_id===id);
+  const cTime=allTimeEntries.filter(e=>e.client_id===id);
+  const totalSecs=cTime.reduce((a,e)=>a+e.duration_seconds,0);
+
+  // Overview
+  document.getElementById('cd-overview').innerHTML=`
+    <div class="tc">
+      <div><div class="st">Recent emails</div><div class="lc">${cEmails.slice(0,3).map(emailRowHTML).join('')||'<div class="empty">No emails yet</div>'}</div></div>
+      <div><div class="st">Open tasks</div><div class="tlist">${cTasks.filter(t=>t.status!=='done').map(taskHTML).join('')||'<div class="empty">No open tasks</div>'}</div></div>
+    </div>`;
+
+  // Timeline
+  const tlItems=[
+    ...cEmails.map(e=>({type:'email',title:e.subject||'Email',sub:e.from_name,date:e.received_at})),
+    ...cTasks.map(t=>({type:'task',title:t.title,sub:`${t.status} · Due ${fmtD(t.due_date)}`,date:t.created_at})),
+    ...allMeetings.filter(m=>m.client_id===id).map(m=>({type:'meeting',title:`${m.meeting_type} meeting`,sub:m.agenda_approved?'Agenda approved':'Scheduled',date:m.meeting_date+'T12:00:00'})),
+  ].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const tlIcons={email:'✉️',task:'✅',meeting:'📅',note:'📝',transcript:'🎙️'};
+  document.getElementById('cd-timeline').innerHTML=`<div class="timeline">${tlItems.slice(0,20).map(item=>`
+    <div class="tl-item ${item.type}">
+      <div class="tl-body"><div class="tl-title">${tlIcons[item.type]||'•'} ${item.title}</div><div class="tl-sub">${item.sub||''}</div></div>
+      <div class="tl-date">${fmtD(item.date?.slice(0,10))}</div>
+    </div>`).join('')||'<div class="empty">No activity yet</div>'}</div>`;
+
+  document.getElementById('cd-emails').innerHTML=`<div class="lc">${cEmails.map(emailRowHTML).join('')||'<div class="empty">No emails linked yet</div>'}</div>`;
+  document.getElementById('cd-drive').innerHTML=`
+    <div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="btn sm" onclick="syncDriveForClientId('${id}')">🔄 Sync Drive folder</button></div>
+    <div class="lc">${cFiles.map(driveRowHTML).join('')||'<div class="empty">No Drive files yet — add a Drive folder URL to this client then sync</div>'}</div>`;
+  document.getElementById('cd-tasks').innerHTML=`<div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="btn sm p" onclick="openTaskFor('${id}')">+ Add task</button></div><div class="tlist">${cTasks.map(taskHTML).join('')||'<div class="empty">No tasks yet</div>'}</div>`;
+  document.getElementById('cd-time').innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div><div style="font-size:24px;font-weight:700;color:var(--purple);font-family:var(--mono)">${(totalSecs/3600).toFixed(1)}h</div><div style="font-size:12px;color:var(--ts)">Total logged</div></div>
+      <button class="btn sm p" onclick="openTimeFor('${id}')">⏱️ Log time</button>
+    </div>
+    <div class="tlist">${cTime.map(te=>`<div class="ti"><div class="tb2"><div class="tt">${te.task_name}</div><div class="tm3"><span style="font-size:11px;color:var(--ts)">${fmtD(te.entry_date)}</span></div></div><div style="font-family:var(--mono);font-size:13px;font-weight:500;color:var(--purple)">${fmtDur(te.duration_seconds)}</div></div>`).join('')||'<div class="empty">No time logged yet</div>'}`;
+
+  // Notes
+  const{data:notes}=await sb.from('meeting_notes').select('*,profiles(full_name)').eq('client_id',id).order('created_at',{ascending:false});
+  // Client notes
+  const{data:clientNotes}=await sb.from('client_notes').select('*,profiles(full_name)').eq('client_id',id).order('created_at',{ascending:false});
+
+  let notesHTML=`<div style="margin-bottom:16px">
+    <textarea class="ftarea" id="new-note-text" placeholder="Add a check-in note for ${c.name}..." style="width:100%;min-height:100px"></textarea>
+    <div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn sm p" onclick="saveClientNote('${id}')">Save note</button></div>
+  </div>`;
+
+  // Show AI-generated meeting notes
+  if(notes&&notes.length){
+    notesHTML+=`<div class="st" style="margin-bottom:10px">Meeting notes (AI generated)</div>`;
+    notesHTML+=(notes||[]).map(n=>{
+      let parsed=null;try{parsed=JSON.parse(n.notes_generated);}catch{}
+      return `<div class="notes-card">
+        <div style="font-size:11px;color:var(--ts);font-family:var(--mono);margin-bottom:8px">${fmtD(n.created_at?.slice(0,10))} · ${n.profiles?.full_name||'Team member'} · From transcript</div>
+        ${parsed?`
+          <div class="notes-section"><div class="notes-section-title">Summary</div><div style="font-size:13px;line-height:1.6">${parsed.summary||''}</div></div>
+          ${parsed.keyDecisions?.length?`<div class="notes-section"><div class="notes-section-title">Key decisions</div><ul class="notes-list">${parsed.keyDecisions.map(d=>`<li>${d}</li>`).join('')}</ul></div>`:''}
+          ${parsed.keyDiscussions?.length?`<div class="notes-section"><div class="notes-section-title">Discussion points</div><ul class="notes-list">${parsed.keyDiscussions.map(d=>`<li>${d}</li>`).join('')}</ul></div>`:''}
+          ${parsed.wins?.length?`<div class="notes-section"><div class="notes-section-title" style="color:var(--teal)">Wins</div><ul class="notes-list">${parsed.wins.map(d=>`<li>${d}</li>`).join('')}</ul></div>`:''}
+          ${parsed.concerns?.length?`<div class="notes-section"><div class="notes-section-title" style="color:var(--amber)">Concerns</div><ul class="notes-list">${parsed.concerns.map(d=>`<li>${d}</li>`).join('')}</ul></div>`:''}
+        `:`<div style="font-size:13px;line-height:1.6">${n.notes_generated||''}</div>`}
+      </div>`;
+    }).join('');
+  }
+
+  if(clientNotes&&clientNotes.length){
+    notesHTML+=`<div class="st" style="margin-bottom:10px;margin-top:16px">Check-in notes</div>`;
+    notesHTML+=(clientNotes||[]).map(n=>`<div class="note-card"><div class="note-tx">${n.note_text}</div><div class="note-meta">${fmtD(n.created_at?.slice(0,10))} · ${n.profiles?.full_name||'Team member'}</div></div>`).join('');
+  }
+
+  if(!notes?.length&&!clientNotes?.length)notesHTML+='<div class="empty">No notes yet — add one above</div>';
+  document.getElementById('cd-notes').innerHTML=notesHTML;
+
+  ['cd-overview','cd-timeline','cd-emails','cd-drive','cd-tasks','cd-notes','cd-time'].forEach(x=>document.getElementById(x).style.display='none');
+  document.getElementById('cd-overview').style.display='block';
+  document.querySelectorAll('#cd-tabs .tab').forEach((t,i)=>t.classList.toggle('active',i===0));
+}
+
+function cdTab(el,tabId){
+  document.querySelectorAll('#cd-tabs .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  ['cd-overview','cd-timeline','cd-emails','cd-drive','cd-tasks','cd-notes','cd-time'].forEach(id=>document.getElementById(id).style.display=id===tabId?'block':'none');
+}
+
+async function saveClientNote(clientId){
+  const text=document.getElementById('new-note-text')?.value?.trim();
+  if(!text){toast('Please write a note first','err');return;}
+  const{error}=await sb.from('client_notes').insert({client_id:clientId,note_text:text,created_by:currentUser.id});
+  if(error){toast('Failed to save','err');return;}
+  toast('Note saved ✓','ok');
+  logActivity('note','Note added',text.slice(0,60),clientId);
+  showClientDetail(clientId);
+}
+
+// ── Row HTML ──
+function emailRowHTML(e){
+  return `<div class="erow ${e.is_unread?'unread':''}">
+    <div class="edot ${e.is_unread?'':'read'}"></div>
+    <div class="efrom">${e.from_name||e.from_email||'Unknown'}</div>
+    <div class="ebody"><div class="esubj">${e.subject||'(no subject)'}</div><div class="eprev">${e.preview||''}</div></div>
+    <div class="edate">${e.received_at?fmtD(e.received_at.slice(0,10)):''}</div>
+  </div>`;
+}
+
+function driveRowHTML(f){
+  const icons={doc:'📄',sheet:'📊',pdf:'📑',folder:'📁',slide:'📊',other:'📎'};
+  const url=f.drive_url||'';
+  return `<div class="drow" onclick="${url?`window.open('${url}','_blank')`:''}">
+    <div class="dic ${f.file_type||'doc'}">${icons[f.file_type]||'📄'}</div>
+    <div class="dname">${f.name}${f.is_template?` <span class="b drive" style="font-size:10px;margin-left:5px">Template</span>`:''}</div>
+    <div class="ddate">${f.modified_at?fmtD(f.modified_at.slice(0,10)):''}</div>
+    ${url?`<button class="btn xs" onclick="event.stopPropagation();window.open('${url}','_blank')">Open ↗</button>`:`<button class="btn xs">Open</button>`}
+  </div>`;
+}
+
+// ── Tasks ──
+function renderTasks(){
+  let list=allTasks;
+  if(taskFilter==='mine')list=allTasks.filter(t=>t.assignee_id===currentUser?.id);
+  if(taskFilter==='overdue')list=allTasks.filter(t=>isOD(t.due_date,t.status));
+  if(taskFilter==='done')list=allTasks.filter(t=>t.status==='done');
+  if(taskFilter==='all')list=[...allTasks.filter(t=>t.status!=='done'),...allTasks.filter(t=>t.status==='done')];
+  document.getElementById('main-task-list').innerHTML=list.map(taskHTML).join('')||'<div class="empty">No tasks here</div>';
+}
+
+function filterTasksTab(el,f){
+  document.querySelectorAll('#page-tasks .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active'); taskFilter=f; renderTasks();
+}
+
+// Task edit modal
+function openEditTask(id){
+  const t=allTasks.find(x=>x.id===id); if(!t)return;
+  editingTaskId=id;
+  document.getElementById('task-modal-title').textContent='Edit task';
+  document.getElementById('task-modal-btn').textContent='Save changes';
+  document.getElementById('nt-title').value=t.title;
+  document.getElementById('nt-client').innerHTML='<option value="">— No client —</option>'+allClients.map(c=>`<option value="${c.id}" ${c.id===t.client_id?'selected':''}>${c.name}</option>`).join('');
+  document.getElementById('nt-assignee').innerHTML=allProfiles.map(p=>`<option value="${p.id}" ${p.id===t.assignee_id?'selected':''}>${p.full_name||p.email||'?'}</option>`).join('');
+  document.getElementById('nt-due').value=t.due_date||'';
+  document.getElementById('nt-pri').value=t.priority||'med';
+  document.getElementById('nt-status').value=t.status||'todo';
+  document.getElementById('nt-notes').value=t.notes||'';
+  openM('addTask');
+}
+
+function resetTaskModal(){
+  editingTaskId=null;
+  document.getElementById('task-modal-title').textContent='Add task';
+  document.getElementById('task-modal-btn').textContent='Add task';
+  ['nt-title','nt-notes'].forEach(id=>document.getElementById(id).value='');
+}
+
+async function saveTask(){
+  const title=document.getElementById('nt-title').value.trim();
+  if(!title){toast('Please enter a task title','err');return;}
+  const payload={title,client_id:document.getElementById('nt-client').value||null,assignee_id:document.getElementById('nt-assignee').value||null,due_date:document.getElementById('nt-due').value||null,priority:document.getElementById('nt-pri').value,status:document.getElementById('nt-status').value,notes:document.getElementById('nt-notes').value||null};
+
+  if(editingTaskId){
+    const{error}=await sb.from('tasks').update(payload).eq('id',editingTaskId);
+    if(error){toast('Failed to save','err');return;}
+    const t=allTasks.find(x=>x.id===editingTaskId);
+    if(t)Object.assign(t,payload);
+    toast('Task updated ✓','ok');
+  }else{
+    const{data,error}=await sb.from('tasks').insert({...payload,source:'manual',created_by:currentUser.id}).select().single();
+    if(error){toast('Failed to add','err');return;}
+    allTasks.unshift(data);
+    logActivity('task','Task created',title,data.client_id);
+    toast('Task added ✓','ok');
+  }
+  closeM('addTask'); resetTaskModal(); renderTasks(); updateBadges();
+}
+
+// ── Meetings ──
+function renderMeetings(){
+  const upcoming=allMeetings.filter(m=>m.status==='scheduled').sort((a,b)=>a.meeting_date>b.meeting_date?1:-1);
+  document.getElementById('meetings-list').innerHTML=upcoming.map(m=>{
+    const c=gc(m.client_id); if(!c)return'';
+    return `<div class="mrow">
+      <div class="minit" style="background:${c.bg_color};color:${c.color}">${inits(c.name)}</div>
+      <div class="minfo"><div class="mname">${c.name} — ${m.meeting_type}</div>
+      <div class="mmeta">${fmtDLong(m.meeting_date)} · ${m.agenda_approved?`<span style="color:var(--teal);font-weight:500">Agenda approved ✓</span>${m.agenda_doc_url?` <a href="${m.agenda_doc_url}" target="_blank" style="color:var(--blue);font-size:11px">Open doc ↗</a>`:''}`:' <span style="color:var(--amber);font-weight:500">Agenda pending</span>'}</div></div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button class="btn sm" onclick="setWFClient('${m.client_id}')">Prep agenda</button>
+        ${!m.agenda_approved?`<button class="btn sm s" onclick="approveMtg('${m.id}')">✓ Approve</button>`:''}
+        <button class="btn sm" onclick="navTo('transcripts',null)">Process transcript</button>
+      </div>
+    </div>`;
+  }).join('')||'<div class="empty">No upcoming meetings</div>';
+  renderWorkflow();
+}
+
+async function approveMtg(id){
+  const{error}=await sb.from('meetings').update({agenda_approved:true}).eq('id',id);
+  if(error){toast('Failed','err');return;}
+  const m=allMeetings.find(x=>x.id===id); if(m)m.agenda_approved=true;
+  toast('Agenda approved ✓','ok'); renderMeetings();
+}
+
+function renderWorkflow(){
+  document.getElementById('meeting-workflow').innerHTML=`
+    <div class="wfgrid">
+      <div class="wfstep hl">
+        <div class="wfbadge">Step 1 · Pre-meeting</div>
+        <div class="wftitle">Generate agenda</div>
+        <div class="wfdesc">Select a client. The AI reads last notes and recent emails then suggests agenda items using your template.</div>
+        <select class="fsel" id="wf-client" style="margin-bottom:9px"><option value="">Select client...</option>${allClients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select>
+        <div style="margin-bottom:9px"><a class="tlink" href="${TEMPLATE_URL}" target="_blank">📄 Using your agenda template ↗</a></div>
+        <button class="btn p sm" onclick="generateAgenda()">✨ Generate suggestions</button>
+      </div>
+      <div class="wfstep">
+        <div class="wfbadge">Step 2 · Approve</div>
+        <div class="wftitle">Review & save to Drive</div>
+        <div class="wfdesc">Any team member reviews and approves. A copy is saved to your Google Drive automatically.</div>
+        <div id="wf-step2"><div style="font-size:12px;color:var(--ts);padding:6px 0">Select a client in step 1...</div></div>
+      </div>
+      <div class="wfstep">
+        <div class="wfbadge">Step 3 · Post-meeting</div>
+        <div class="wftitle">Process transcript</div>
+        <div class="wfdesc">After the meeting, download the transcript from Zoom or Read.ai and paste it in. Claude generates structured notes and tasks.</div>
+        <button class="btn p sm" onclick="navTo('transcripts',null)">Go to Transcripts →</button>
+      </div>
+      <div class="wfstep">
+        <div class="wfbadge">Step 4 · Auto-tasks</div>
+        <div class="wftitle">Tasks auto-created</div>
+        <div class="wfdesc">Action items from the transcript are assigned to you with due dates within 7 days and appear in your task board.</div>
+        <div style="font-size:12px;color:var(--ts);padding:6px 0">Tasks appear automatically after transcript processing.</div>
+      </div>
+    </div>`;
+}
+
+function setWFClient(cid){
+  navTo('meetings',null);
+  setTimeout(()=>{const s=document.getElementById('wf-client');if(s)s.value=cid;},50);
+}
+function openMeetingFor(cid){setWFClient(cid);}
+
+async function generateAgenda(){
+  const cid=document.getElementById('wf-client')?.value;
+  if(!cid){toast('Please select a client first','err');return;}
+  const c=gc(cid); if(!c)return;
+  const s2=document.getElementById('wf-step2');
+  s2.innerHTML=`<div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--purple);padding:6px 0"><div class="spinner"></div> Reading last notes + emails for ${c.name}...</div>`;
+  const result=await callBackend('/agenda/generate','POST',{clientId:cid});
+  if(!result){s2.innerHTML='<div style="font-size:12px;color:var(--red)">Failed to generate agenda</div>';return;}
+  const items=result.suggestedAgenda||[];
+  s2.innerHTML=`
+    <div class="aipanel">
+      <div class="ailbl">✨ AI-suggested agenda for ${c.name}</div>
+      ${items.map((it,i)=>`<div class="agrow"><input type="checkbox" class="agcb" checked><span class="agtx">${i+1}. ${it.text}</span><span class="agtm">${it.time}</span></div>`).join('')}
+    </div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap">
+      <button class="btn sm s" onclick="approveAgendaSave('${cid}')">✓ Approve & save to Drive</button>
+    </div>`;
+}
+
+async function approveAgendaSave(cid){
+  const c=gc(cid); if(!c)return;
+  const checkboxes=document.querySelectorAll('#wf-step2 .agcb');
+  const texts=document.querySelectorAll('#wf-step2 .agtx');
+  const approved=[...checkboxes].map((cb,i)=>cb.checked?texts[i]?.textContent:'').filter(Boolean);
+  const mtg=allMeetings.find(m=>m.client_id===cid&&m.status==='scheduled');
+  if(!mtg){toast('No upcoming meeting found for this client','err');return;}
+  const result=await callBackend('/drive/create-agenda','POST',{clientId:cid,meetingId:mtg.id,agendaItems:approved});
+  if(!result)return;
+  toast('Agenda approved and saved to Drive ✓','ok');
+  if(result.docUrl){const mtgObj=allMeetings.find(x=>x.id===mtg.id);if(mtgObj){mtgObj.agenda_approved=true;mtgObj.agenda_doc_url=result.docUrl;}}
+  renderMeetings();
+}
+
+async function addMeeting(){
+  const client=document.getElementById('nm-client').value;
+  if(!client){toast('Please select a client','err');return;}
+  const{data,error}=await sb.from('meetings').insert({client_id:client,meeting_date:document.getElementById('nm-date').value,meeting_type:document.getElementById('nm-type').value,created_by:currentUser.id}).select().single();
+  if(error){toast('Failed: '+error.message,'err');return;}
+  allMeetings.push(data);
+  closeM('newMeeting'); toast('Meeting scheduled ✓','ok');
+  logActivity('meeting',`Meeting scheduled — ${gc(client)?.name||''}`,document.getElementById('nm-type').value,client);
+  renderMeetings(); updateBadges();
+}
+
+// ── Time Tracker ──
+function renderTimePage(){
+  const tcs=document.getElementById('timer-client');
+  if(tcs)tcs.innerHTML='<option value="">Select client...</option>'+allClients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  const curMonth=today.toISOString().slice(0,7);
+  document.getElementById('month-label-el').textContent='This month — '+today.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  const summary={};
+  allTimeEntries.filter(e=>e.month_key===curMonth).forEach(e=>{if(!summary[e.client_id])summary[e.client_id]=0;summary[e.client_id]+=e.duration_seconds;});
+  const totalSecs=Object.values(summary).reduce((a,b)=>a+b,0);
+  document.getElementById('monthly-summary').innerHTML=[
+    `<div class="ms-card" style="background:var(--purple);border-color:var(--purple)"><div class="ms-client" style="color:rgba(255,255,255,.7)">Total this month</div><div class="ms-hours" style="color:#fff">${(totalSecs/3600).toFixed(1)}h</div><div class="ms-sub" style="color:rgba(255,255,255,.6)">${allTimeEntries.filter(e=>e.month_key===curMonth).length} entries</div></div>`,
+    ...allClients.filter(c=>summary[c.id]).map(c=>`<div class="ms-card"><div class="ms-client">${c.name}</div><div class="ms-hours">${(summary[c.id]/3600).toFixed(1)}h</div><div class="ms-sub">${allTimeEntries.filter(e=>e.client_id===c.id&&e.month_key===curMonth).length} entries</div></div>`)
+  ].join('');
+  const cf=document.getElementById('te-cf');
+  if(cf)cf.innerHTML='<option value="">All clients</option>'+allClients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  const mf=document.getElementById('te-mf');
+  if(mf){const months=[...new Set(allTimeEntries.map(e=>e.month_key))].sort().reverse();if(!months.includes(curMonth))months.unshift(curMonth);mf.innerHTML=months.map(m=>{const dt=new Date(m+'-15');return`<option value="${m}" ${m===curMonth?'selected':''}>${dt.toLocaleDateString('en-US',{month:'long',year:'numeric'})}</option>`;}).join('');}
+  loadTimeEntries();
+}
+
+function loadTimeEntries(){
+  const cf=document.getElementById('te-cf')?.value||'';
+  const mf=document.getElementById('te-mf')?.value||'';
+  let entries=allTimeEntries;
+  if(cf)entries=entries.filter(e=>e.client_id===cf);
+  if(mf)entries=entries.filter(e=>e.month_key===mf);
+  document.getElementById('time-entries-list').innerHTML=entries.length?entries.map(te=>{
+    const c=gc(te.client_id);const p=gp(te.user_id);const svc=c?svcClass(c.service_type):'';
+    return `<div class="te-row">
+      <div class="te-client">${c?`<span class="b ${svc}" style="background:${c.bg_color};color:${c.color}">${c.name}</span>`:'—'}</div>
+      <div class="te-task">${te.task_name}</div>
+      <div class="te-dur">${fmtDur(te.duration_seconds)}</div>
+      <div class="te-date">${fmtD(te.entry_date)}</div>
+      <div style="font-size:11px;color:var(--ts);min-width:60px;text-align:right">${p?(p.full_name||p.email||'').split(' ')[0]||'?':'?'}</div>
+      ${te.user_id===currentUser?.id?`<button class="btn xs" style="color:var(--red)" onclick="deleteTimeEntry('${te.id}')">✕</button>`:`<span style="width:32px"></span>`}
+    </div>`;
+  }).join(''):'<div class="empty">No time entries for this period</div>';
+}
+
+async function toggleTimer(){
+  if(!timerRunning){
+    const cid=document.getElementById('timer-client').value;
+    const task=document.getElementById('timer-task').value.trim();
+    if(!cid){toast('Please select a client first','err');return;}
+    if(!task){toast('Please enter a project or task name','err');return;}
+    timerRunning=true;timerStart=Date.now()-timerSeconds*1000;
+    timerInterval=setInterval(()=>{timerSeconds=Math.floor((Date.now()-timerStart)/1000);document.getElementById('timer-display').textContent=fmtHrs(timerSeconds);},1000);
+    document.getElementById('timer-btn').textContent='⏹ Stop timer';
+    document.getElementById('timer-btn').className='btn s';
+    document.getElementById('timer-card').classList.add('running');
+    document.getElementById('timer-display').classList.add('running');
+    document.getElementById('timer-discard').style.display='inline-flex';
+  }else{await stopTimer(true);}
+}
+
+async function stopTimer(save){
+  clearInterval(timerInterval);timerInterval=null;timerRunning=false;
+  if(save&&timerSeconds>0){
+    const cid=document.getElementById('timer-client').value;
+    const task=document.getElementById('timer-task').value.trim();
+    showLoading('Saving time entry...');
+    const{data,error}=await sb.from('time_entries').insert({client_id:cid,user_id:currentUser.id,task_name:task,duration_seconds:timerSeconds,entry_date:todayStr}).select().single();
+    hideLoading();
+    if(error){toast('Failed to save','err');}
+    else{allTimeEntries.unshift(data);toast(`Time logged: ${fmtDur(timerSeconds)} ✓`,'ok');logActivity('time',`Time logged — ${gc(cid)?.name||''}`,`${task} · ${fmtDur(timerSeconds)}`,cid);}
+  }
+  timerSeconds=0;
+  document.getElementById('timer-display').textContent='00:00:00';
+  document.getElementById('timer-btn').textContent='▶ Start timer';
+  document.getElementById('timer-btn').className='btn p';
+  document.getElementById('timer-card').classList.remove('running');
+  document.getElementById('timer-display').classList.remove('running');
+  document.getElementById('timer-discard').style.display='none';
+  document.getElementById('timer-task').value='';
+  renderTimePage();
+}
+
+function discardTimer(){if(confirm('Discard this time entry?'))stopTimer(false);}
+
+async function addManualTime(){
+  const cid=document.getElementById('ate-client').value;
+  const task=document.getElementById('ate-task').value.trim();
+  const date=document.getElementById('ate-date').value;
+  const hrs=parseFloat(document.getElementById('ate-hrs').value);
+  if(!cid||!task||!date||isNaN(hrs)||hrs<=0){toast('Please fill in all fields','err');return;}
+  const{data,error}=await sb.from('time_entries').insert({client_id:cid,user_id:currentUser.id,task_name:task,duration_seconds:Math.round(hrs*3600),entry_date:date}).select().single();
+  if(error){toast('Failed to save','err');return;}
+  allTimeEntries.unshift(data);closeM('addTime');toast('Time entry saved ✓','ok');renderTimePage();
+}
+
+async function deleteTimeEntry(id){
+  if(!confirm('Delete this time entry?'))return;
+  const{error}=await sb.from('time_entries').delete().eq('id',id);
+  if(error){toast('Failed to delete','err');return;}
+  allTimeEntries=allTimeEntries.filter(e=>e.id!==id);toast('Entry deleted');renderTimePage();
+}
+
+function exportTimeCSV(){
+  const cf=document.getElementById('te-cf')?.value||'';
+  const mf=document.getElementById('te-mf')?.value||today.toISOString().slice(0,7);
+  let entries=allTimeEntries.filter(e=>e.month_key===mf);
+  if(cf)entries=entries.filter(e=>e.client_id===cf);
+  const rows=[['Client','Project / Task','Duration (hrs)','Date','Team member']];
+  entries.forEach(te=>{
+    const c=gc(te.client_id);const p=gp(te.user_id);
+    rows.push([c?.name||'—',te.task_name,(te.duration_seconds/3600).toFixed(2),te.entry_date,p?.full_name||p?.email||'?']);
+  });
+  const csv=rows.map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`time-entries-${mf}.csv`;a.click();
+  URL.revokeObjectURL(url);
+  toast('CSV downloaded ✓','ok');
+}
+
+function openTimeFor(cid){
+  const sel=document.getElementById('ate-client');
+  sel.innerHTML='<option value="">Select client...</option>'+allClients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  if(cid)sel.value=cid;
+  document.getElementById('ate-date').value=todayStr;
+  openM('addTime');
+}
+
+// ── Gmail ──
+function renderGmail(){
+  const sel=document.getElementById('gmail-cf');
+  sel.innerHTML='<option value="">All clients</option>'+allClients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  filterEmailsUI();
+}
+function filterEmailsUI(){
+  const s=(document.getElementById('gmail-search')?.value||'').toLowerCase();
+  const c=document.getElementById('gmail-cf')?.value||'';
+  const f=allEmails.filter(e=>{const ms=!s||[e.subject,e.from_name,e.from_email,e.preview].some(x=>(x||'').toLowerCase().includes(s));return ms&&(!c||e.client_id===c);});
+  document.getElementById('gmail-list').innerHTML=f.map(emailRowHTML).join('')||'<div class="empty">No emails match</div>';
+}
+
+async function syncGmail(){
+  const btn=document.querySelector('#page-gmail .btn.sm');
+  if(btn){btn.disabled=true;btn.textContent='Syncing...';}
+  showLoading('Syncing Gmail...');
+  const result=await callBackend('/gmail/sync','POST');
+  hideLoading();
+  if(btn){btn.disabled=false;btn.textContent='🔄 Sync Gmail';}
+  if(!result)return;
+  toast(`Gmail synced — ${result.synced} new email${result.synced!==1?'s':''}${result.synced===0?' (all up to date)':''}`, result.synced>0?'ok':'');
+  await loadAllData(); filterEmailsUI(); renderDashboard();
+}
+
+// ── Drive ──
+function renderDrive(){
+  const sel=document.getElementById('drive-cf');
+  sel.innerHTML='<option value="">All clients</option>'+allClients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  filterDriveUI();
+}
+function filterDriveUI(){
+  const c=document.getElementById('drive-cf')?.value||'';
+  const f=c?allDriveFiles.filter(f=>f.client_id===c||f.is_template):allDriveFiles;
+  document.getElementById('drive-list').innerHTML=f.map(driveRowHTML).join('')||'<div class="empty">No Drive files yet — select a client with a Drive folder URL and sync</div>';
+}
+
+async function syncDriveForClient(){
+  const cid=document.getElementById('drive-cf')?.value;
+  if(!cid){toast('Please select a client first','err');return;}
+  syncDriveForClientId(cid);
+}
+
+async function syncDriveForClientId(cid){
+  showLoading('Syncing Drive folder...');
+  const result=await callBackend('/drive/sync','POST',{clientId:cid});
+  hideLoading();
+  if(!result)return;
+  toast(`Drive synced — ${result.synced} file${result.synced!==1?'s':''}`,'ok');
+  await loadAllData(); filterDriveUI();
+}
+
+// ── Calendar ──
+function renderCalendar(){
+  const triggers=allCalEvents.filter(e=>e.agenda_triggered);
+  document.getElementById('cal-alerts').innerHTML=triggers.map(e=>{
+    const c=gc(e.client_id); if(!c)return'';
+    const daysUntil=e.event_date?Math.round((new Date(e.event_date+'T12:00:00')-today)/86400000):0;
+    return `<div class="cal-alert ${e.agenda_ready?'ready':''}">
+      <span style="font-size:20px">${e.agenda_ready?'✅':'⚡'}</span>
+      <div style="flex:1"><div style="font-size:13px;font-weight:600;margin-bottom:2px">${e.agenda_ready?'Agenda ready':'Auto-agenda triggered'} — ${c.name}</div>
+      <div style="font-size:12px;color:var(--tm)">${e.meeting_type} · ${fmtDLong(e.event_date)} at ${e.event_time||''} (${daysUntil} day${daysUntil!==1?'s':''} away)</div></div>
+      ${e.agenda_ready?`<button class="btn sm s" onclick="navTo('meetings',null)">Review</button>`:`<button class="btn sm p" onclick="setWFClient('${e.client_id}');navTo('meetings',null)">Generate</button>`}
+    </div>`;
+  }).join('');
+
+  document.getElementById('cal-upcoming').innerHTML=allCalEvents.slice(0,5).map(e=>{
+    const c=gc(e.client_id); if(!c)return'';
+    const daysUntil=e.event_date?Math.round((new Date(e.event_date+'T12:00:00')-today)/86400000):0;
+    return `<div class="calrow">
+      <div class="calbullet" style="background:${c.color}"></div>
+      <div class="calinfo"><div class="caltitle">${e.title}</div><div class="calmeta">${fmtDLong(e.event_date)} · ${e.event_time||''} · in ${daysUntil} days</div></div>
+      ${e.agenda_triggered?`<span class="b" style="background:var(--pl);color:var(--purple)">Auto-triggered</span>`:''}
+    </div>`;
+  }).join('')||'<div class="empty">No upcoming meetings — sync your calendar</div>';
+
+  document.getElementById('cal-queue').innerHTML=`
+    <div class="hint info" style="margin-bottom:10px">Meetings within ${appSettings.agenda_trigger_days||2} days auto-trigger agenda generation.</div>
+    ${triggers.length?triggers.map(e=>{const c=gc(e.client_id);if(!c)return'';return`<div class="calrow"><div class="calbullet" style="background:${c.color}"></div><div class="calinfo"><div class="caltitle">${c.name}</div><div class="calmeta">${e.meeting_type} · ${fmtDLong(e.event_date)}</div></div><span class="b ${e.agenda_ready?'done':'todo'}">${e.agenda_ready?'Ready':'Triggered'}</span></div>`;}).join(''):'<div class="empty">No meetings in auto-agenda window</div>'}`;
+
+  document.getElementById('cal-all').innerHTML=allCalEvents.map(e=>{
+    const c=gc(e.client_id);if(!c)return'';
+    return `<div class="calrow" style="border-bottom:1px solid var(--br)"><div class="calbullet" style="background:${c.color}"></div><div class="calinfo" style="flex:1"><div class="caltitle">${e.title}</div><div class="calmeta">${fmtDLong(e.event_date)} · ${e.event_time||''}</div></div><span class="b ${svcClass(c.service_type)}" style="background:${c.bg_color};color:${c.color};margin-right:8px">${c.name}</span><button class="btn xs" onclick="setWFClient('${e.client_id}');navTo('meetings',null)">Prep agenda</button></div>`;
+  }).join('')||'<div class="empty">No calendar events synced yet — click Sync to connect Google Calendar</div>';
+}
+
+async function syncCalendar(){
+  const btn=event?.target;
+  if(btn){btn.disabled=true;btn.textContent='Syncing...';}
+  showLoading('Syncing Google Calendar...');
+  const result=await callBackend('/calendar/sync','POST');
+  hideLoading();
+  if(btn){btn.disabled=false;btn.textContent='🔄 Sync now';}
+  if(!result)return;
+  toast(`Calendar synced — ${result.synced} meeting${result.synced!==1?'s':''} found`,'ok');
+  await loadAllData(); renderCalendar(); renderDashboard();
+}
+
+// ── Transcripts ──
+function renderTranscripts(){
+  const trClient=document.getElementById('tr-client');
+  trClient.innerHTML='<option value="">Select client...</option>'+allClients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  loadTranscriptHistory();
+}
+
+function updateTranscriptMeetings(){
+  const cid=document.getElementById('tr-client').value;
+  const mtgSel=document.getElementById('tr-meeting');
+  const clientMeetings=allMeetings.filter(m=>m.client_id===cid&&m.status==='scheduled');
+  mtgSel.innerHTML='<option value="">— Select meeting (optional) —</option>'+clientMeetings.map(m=>`<option value="${m.id}">${m.meeting_type} · ${fmtDLong(m.meeting_date)}</option>`).join('');
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  const trClient=document.getElementById('tr-client');
+  if(trClient)trClient.addEventListener('change',updateTranscriptMeetings);
+});
+
+async function processTranscript(){
+  const text=document.getElementById('tr-text').value.trim();
+  const cid=document.getElementById('tr-client').value;
+  const mid=document.getElementById('tr-meeting').value;
+  if(!text||text.length<50){toast('Please paste a transcript first (minimum 50 characters)','err');return;}
+  const btn=document.getElementById('tr-btn');
+  const statusEl=document.getElementById('tr-status');
+  btn.disabled=true;btn.textContent='Processing...';
+  statusEl.innerHTML='<div class="hint purple"><div class="spinner" style="display:inline-block;margin-right:8px"></div> Claude is reading the transcript and generating notes and tasks — this takes about 15-20 seconds...</div>';
+  const result=await callBackend('/transcript/process','POST',{transcript:text,clientId:cid||null,meetingId:mid||null});
+  btn.disabled=false;btn.textContent='✨ Generate notes + tasks';
+  if(!result){statusEl.innerHTML='<div class="hint" style="background:var(--rl);border-color:var(--red);color:var(--red)">Failed to process transcript. Check your backend connection.</div>';return;}
+  statusEl.innerHTML='';
+
+  const{meetingNotes,tasksCreated,tasks}=result;
+  const c=gc(cid);
+
+  // Show results
+  document.getElementById('tr-results').innerHTML=`
+    <div class="hint ok">✓ Processed successfully — ${tasksCreated} task${tasksCreated!==1?'s':''} created${c?' for '+c.name:''}</div>
+    <div class="card" style="margin-bottom:16px">
+      <div class="st" style="margin-bottom:12px">Meeting notes</div>
+      <div class="notes-section"><div class="notes-section-title">Summary</div><div style="font-size:13px;line-height:1.6">${meetingNotes?.summary||''}</div></div>
+      ${meetingNotes?.keyDecisions?.length?`<div class="notes-section"><div class="notes-section-title">Key decisions</div><ul class="notes-list">${meetingNotes.keyDecisions.map(d=>`<li>${d}</li>`).join('')}</ul></div>`:''}
+      ${meetingNotes?.keyDiscussions?.length?`<div class="notes-section"><div class="notes-section-title">Discussion points</div><ul class="notes-list">${meetingNotes.keyDiscussions.map(d=>`<li>${d}</li>`).join('')}</ul></div>`:''}
+      ${meetingNotes?.wins?.length?`<div class="notes-section"><div class="notes-section-title" style="color:var(--teal)">Wins</div><ul class="notes-list">${meetingNotes.wins.map(d=>`<li>${d}</li>`).join('')}</ul></div>`:''}
+      ${meetingNotes?.concerns?.length?`<div class="notes-section"><div class="notes-section-title" style="color:var(--amber)">Concerns</div><ul class="notes-list">${meetingNotes.concerns.map(d=>`<li>${d}</li>`).join('')}</ul></div>`:''}
+    </div>
+    <div class="card">
+      <div class="st" style="margin-bottom:12px">Tasks created (${tasksCreated})</div>
+      <div class="tlist">${(tasks||[]).map(taskHTML).join('')||'<div class="empty">No tasks extracted</div>'}</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn sm p" onclick="navTo('tasks',null)">View all tasks →</button>
+      ${c?`<button class="btn sm" onclick="showClientDetail('${cid}')">View ${c.name} notes →</button>`:''}
+    </div>`;
+
+  // Reload data so tasks appear everywhere
+  await loadAllData();
+  document.getElementById('tr-text').value='';
+  loadTranscriptHistory();
+}
+
+async function loadTranscriptHistory(){
+  const{data}=await sb.from('meeting_notes').select('*,clients(name),profiles(full_name)').order('created_at',{ascending:false}).limit(10);
+  const histEl=document.getElementById('tr-history');
+  if(!histEl)return;
+  histEl.innerHTML=(data||[]).map(n=>{
+    let parsed=null;try{parsed=JSON.parse(n.notes_generated);}catch{}
+    return `<div class="note-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div style="font-weight:500;font-size:13px">${n.clients?.name||'No client'}</div>
+        <div class="note-meta">${fmtD(n.created_at?.slice(0,10))} · ${n.profiles?.full_name||'Team member'}</div>
+      </div>
+      <div class="note-tx">${parsed?.summary||n.notes_generated?.slice(0,120)||'No summary'}</div>
+    </div>`;
+  }).join('')||'<div class="empty">No transcripts processed yet</div>';
+}
+
+// ── Settings ──
+async function renderSettings(){
+  const{data:profiles}=await sb.from('profiles').select('*').order('full_name');
+  document.getElementById('team-list').innerHTML=(profiles||[]).map(p=>`
+    <div style="display:flex;align-items:center;gap:10px">
+      ${p.avatar_url?`<img src="${p.avatar_url}" style="width:34px;height:34px;border-radius:9px;object-fit:cover;flex-shrink:0">`:`<div style="width:34px;height:34px;border-radius:9px;background:var(--pl);color:var(--purple);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">${inits(p.full_name||p.email||'?')}</div>`}
+      <div style="flex:1"><div style="font-size:13px;font-weight:500">${p.full_name||'New member'}</div><div style="font-size:11px;color:var(--ts)">${p.email||''}</div></div>
+      <span class="b ${p.role==='owner'?'fo':'n'}">${p.role||'member'}</span>
+    </div>`).join('');
+
+  const{data:googleToken}=await sb.from('google_tokens').select('id').eq('user_id',currentUser.id).single();
+  const googleConnected=!!googleToken;
+
+  document.getElementById('integ-list').innerHTML=[
+    {name:'Google (Calendar + Gmail + Drive)',desc:googleConnected?'Connected — syncing all Google services':'Not connected — click to authorize',ok:googleConnected,action:googleConnected?null:`connectGoogle()`},
+    {name:'Anthropic AI (transcript processing)',desc:'Powers meeting notes and task generation',ok:true,note:'Configured on backend'},
+    {name:'Zoom / Read.ai',desc:'Transcripts pasted manually via the Transcripts page',ok:true,note:'Manual workflow'},
+  ].map(i=>`<div style="display:flex;align-items:center;gap:10px">
+    <div style="flex:1"><div style="font-size:13px;font-weight:500">${i.name}</div><div style="font-size:12px;color:var(--ts)">${i.desc}</div></div>
+    ${i.ok?`<span class="b done">${i.note||'Active'}</span>`:`<span class="b n">Not connected</span>${i.action?`<button class="btn xs p" onclick="${i.action}">Connect</button>`:''}`}
+  </div>`).join('');
+}
+
+async function connectGoogle(){
+  showLoading('Redirecting to Google...');
+  const result=await callBackend('/auth/google');
+  hideLoading();
+  if(result?.url)window.location.href=result.url;
+}
+
+async function saveSettingVal(key,value){
+  await sb.from('settings').upsert({key,value,updated_by:currentUser.id});
+  appSettings[key]=value;
+}
+
+// ── Global search ──
+function globalSearch(query){
+  const q=query.toLowerCase().trim();
+  const resultsEl=document.getElementById('search-results');
+  if(!q||q.length<2){resultsEl.innerHTML='';return;}
+  const results=[];
+  allClients.filter(c=>c.name.toLowerCase().includes(q)).forEach(c=>results.push({type:'Client',typeClass:'fo',title:c.name,sub:c.service_type,action:`showClientDetail('${c.id}')`}));
+  allTasks.filter(t=>t.title.toLowerCase().includes(q)).slice(0,5).forEach(t=>{const c=gc(t.client_id);results.push({type:'Task',typeClass:'inprog',title:t.title,sub:c?c.name:'No client',action:`navTo('tasks',null)`});});
+  allEmails.filter(e=>(e.subject||'').toLowerCase().includes(q)||(e.from_name||'').toLowerCase().includes(q)).slice(0,3).forEach(e=>{const c=gc(e.client_id);results.push({type:'Email',typeClass:'email',title:e.subject||'Email',sub:e.from_name||'',action:`navTo('gmail',null)`});});
+  if(!results.length){resultsEl.innerHTML='<div class="sr-item" style="color:var(--ts)">No results found</div>';return;}
+  resultsEl.innerHTML=results.slice(0,8).map(r=>`
+    <div class="sr-item" onclick="${r.action};document.getElementById('search-results').classList.remove('open');document.getElementById('global-search').value=''">
+      <span class="sr-type b ${r.typeClass}">${r.type}</span>
+      <div><div class="sr-title">${r.title}</div><div class="sr-sub">${r.sub}</div></div>
+    </div>`).join('');
+}
+
+// ── Modals ──
+function openM(id){
+  if(id==='addTask'&&!editingTaskId){
+    document.getElementById('nt-client').innerHTML='<option value="">— No client —</option>'+allClients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+    document.getElementById('nt-assignee').innerHTML=allProfiles.map(p=>`<option value="${p.id}" ${p.id===currentUser?.id?'selected':''}>${p.full_name||p.email||'?'}</option>`).join('');
+    document.getElementById('nt-due').value=dn(3);
+  }
+  if(id==='newMeeting'){
+    document.getElementById('nm-client').innerHTML='<option value="">Select client...</option>'+allClients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+    document.getElementById('nm-date').value=dn(7);
+  }
+  document.getElementById('m-'+id).classList.add('open');
+}
+function closeM(id){document.getElementById('m-'+id).classList.remove('open');}
+function openTaskFor(cid){openM('addTask');setTimeout(()=>{document.getElementById('nt-client').value=cid;},50);}
+
+document.querySelectorAll('.overlay').forEach(o=>{o.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});});
+
+// Check for Google OAuth callback
+const urlParams=new URLSearchParams(window.location.search);
+if(urlParams.get('google_connected')==='true'){
+  toast('Google connected successfully ✓','ok');
+  window.history.replaceState({},'',window.location.pathname);
+}
+if(urlParams.get('error')){
+  toast('Connection failed: '+urlParams.get('error'),'err');
+  window.history.replaceState({},'',window.location.pathname);
+}
+
+// ── Init ──
+initAuth();
+</script>
+</body>
+</html>
