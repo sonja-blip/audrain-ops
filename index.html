@@ -796,6 +796,8 @@ async function onSignedIn(user) {
   updateUserUI();
   renderDashboard();
   hideLoading();
+  // Background sync after load — silent, no spinner
+  setTimeout(backgroundSync, 2000);
 }
 
 async function loadProfile() {
@@ -960,7 +962,7 @@ function renderDashboard() {
   }else{digestEl.innerHTML='';}
 
   // Calendar alerts
-  const triggers=allCalEvents.filter(e=>e.agenda_triggered);
+  const triggers=allCalEvents.filter(e=>e.agenda_triggered&&!e.dismissed);
   document.getElementById('dash-cal-alerts').innerHTML=triggers.map(e=>{
     const c=gc(e.client_id);
     const daysUntil=e.event_date?Math.round((new Date(e.event_date+'T12:00:00')-today)/86400000):0;
@@ -968,7 +970,10 @@ function renderDashboard() {
       <span style="font-size:20px">${e.agenda_ready?'✅':'🗓️'}</span>
       <div style="flex:1"><div style="font-size:13px;font-weight:600;margin-bottom:2px">${e.agenda_ready?'Agenda ready for approval':'Auto-agenda triggered'} — ${c?c.name:'Client'}</div>
       <div style="font-size:12px;color:var(--tm)">${e.meeting_type} in ${daysUntil} day${daysUntil!==1?'s':''} · ${fmtD(e.event_date)} at ${e.event_time||''}</div></div>
-      <button class="btn sm ${e.agenda_ready?'s':'p'}" onclick="navTo('meetings',null)">${e.agenda_ready?'Review agenda':'Generate agenda'}</button>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button class="btn sm ${e.agenda_ready?'s':'p'}" onclick="navTo('meetings',null)">${e.agenda_ready?'Review agenda':'Generate agenda'}</button>
+        <button class="btn sm" style="color:var(--ts);padding:5px 9px" title="Dismiss this alert" onclick="dismissCalAlert('${e.id}')">✕</button>
+      </div>
     </div>`;
   }).join('');
 
@@ -986,6 +991,14 @@ async function loadActivity() {
       <div class="ab"><div class="at2">${a.title}</div><div class="as2">${a.subtitle||''}</div></div>
       <div class="ati">${fmtTS(a.created_at)}</div>
     </div>`).join('')||'<div class="empty">No activity yet</div>';
+}
+
+async function dismissCalAlert(id) {
+  await sb.from('calendar_events').update({ dismissed: true }).eq('id', id);
+  const e = allCalEvents.find(x => x.id === id);
+  if (e) e.dismissed = true;
+  renderDashboard();
+  updateBadges();
 }
 
 async function logActivity(type,title,subtitle,clientId) {
@@ -1868,6 +1881,76 @@ if(urlParams.get('error')){
 }
 
 // ── Init ──
+// ── Background sync ──────────────────────────────────────────
+// Silently syncs Gmail and Calendar when the app loads and when
+// you return to the tab — no spinner, no toast unless new items found
+
+let lastSyncTime = 0;
+const SYNC_COOLDOWN_MS = 5 * 60 * 1000; // don't re-sync within 5 minutes
+
+async function backgroundSync() {
+  if (!currentUser) return;
+  const now = Date.now();
+  if (now - lastSyncTime < SYNC_COOLDOWN_MS) return;
+  lastSyncTime = now;
+
+  try {
+    // Check if Google is connected before trying
+    const { data: token } = await sb.from('google_tokens').select('id').eq('user_id', currentUser.id).single();
+    if (!token) return;
+
+    // Sync Drive folders for all clients that have a folder URL set
+    const clientsWithDrive = allClients.filter(c => c.drive_folder_url);
+    const drivePromises = clientsWithDrive.map(c =>
+      callBackend('/drive/sync', 'POST', { clientId: c.id }).catch(() => null)
+    );
+
+    // Run Gmail, Calendar, and all Drive syncs silently in parallel
+    const [gmailResult, calResult, ...driveResults] = await Promise.allSettled([
+      callBackend('/gmail/sync', 'POST'),
+      callBackend('/calendar/sync', 'POST'),
+      ...drivePromises,
+    ]);
+
+    let newEmails = 0, newMeetings = 0;
+    if (gmailResult.status === 'fulfilled' && gmailResult.value) {
+      newEmails = gmailResult.value.synced || 0;
+    }
+    if (calResult.status === 'fulfilled' && calResult.value) {
+      newMeetings = calResult.value.synced || 0;
+    }
+
+    // Reload data silently
+    await loadAllData();
+
+    // Only show toast if something new was found
+    if (newEmails > 0 || newMeetings > 0) {
+      const parts = [];
+      if (newEmails > 0) parts.push(`${newEmails} new email${newEmails !== 1 ? 's' : ''}`);
+      if (newMeetings > 0) parts.push(`${newMeetings} new meeting${newMeetings !== 1 ? 's' : ''}`);
+      toast(`Synced — ${parts.join(', ')}`, 'ok');
+      // Re-render current page to show new data
+      const activePage = document.querySelector('.page.active')?.id?.replace('page-', '');
+      if (activePage) {
+        const renders = { dashboard: renderDashboard, gmail: renderGmail, calendar: renderCalendar, clients: renderClients };
+        if (renders[activePage]) renders[activePage]();
+      }
+      renderDashboard();
+      updateBadges();
+    }
+  } catch (err) {
+    // Silent fail — background sync should never interrupt the user
+    console.log('Background sync skipped:', err.message);
+  }
+}
+
+// Sync on tab becoming visible (returning to tab)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    backgroundSync();
+  }
+});
+
 initAuth();
 </script>
 </body>
