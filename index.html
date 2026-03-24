@@ -587,7 +587,14 @@ a{color:inherit;text-decoration:none}
         </div>
         <div>
           <div class="card" style="margin-bottom:14px">
-            <div class="st" style="margin-bottom:6px">Agenda template</div>
+            <div class="st" style="margin-bottom:6px">Anthropic API key</div>
+            <div style="font-size:13px;color:var(--tm);margin-bottom:10px;line-height:1.6">Used for transcript processing and agenda generation. Get your key from <a href="https://console.anthropic.com" target="_blank" style="color:var(--blue)">console.anthropic.com</a> → API Keys. ~$0.02 per transcript.</div>
+            <div id="anthropic-key-status"></div>
+            <div style="display:flex;gap:8px;align-items:flex-end">
+              <div style="flex:1"><label class="flbl">API key</label><input class="finput" id="anthropic-key-input" type="password" placeholder="sk-ant-..." style="font-family:var(--mono)"></div>
+              <button class="btn sm p" onclick="saveAnthropicKey()">Save key</button>
+            </div>
+          </div>
             <div style="font-size:13px;color:var(--tm);margin-bottom:10px;line-height:1.6">Connected Google Doc template used for all meeting agendas.</div>
             <div class="hint ok" style="margin-bottom:10px">✓ Template connected</div>
             <a class="tlink" href="https://docs.google.com/document/d/1-2AfdYwvpt7lPWO-gR6JKL85Ezvgyh-ZgWipdunzjPI/edit" target="_blank" style="display:inline-flex;margin-bottom:0">📄 View / edit template ↗</a>
@@ -1630,12 +1637,92 @@ async function processTranscript(){
   const statusEl=document.getElementById('tr-status');
   btn.disabled=true;btn.textContent='Processing...';
   statusEl.innerHTML='<div class="hint purple"><div class="spinner" style="display:inline-block;margin-right:8px"></div> Claude is reading the transcript and generating notes and tasks — this takes about 15-20 seconds...</div>';
-  const result=await callBackend('/transcript/process','POST',{transcript:text,clientId:cid||null,meetingId:mid||null});
+
+  // Get Anthropic API key from Supabase settings
+  const{data:keySetting}=await sb.from('settings').select('value').eq('key','anthropic_api_key').single();
+  const anthropicKey=keySetting?.value||'';
+  if(!anthropicKey){
+    btn.disabled=false;btn.textContent='✨ Generate notes + tasks';
+    statusEl.innerHTML=`<div class="hint warn">⚠️ No Anthropic API key found. Go to <strong>Settings → Anthropic API key</strong> and paste your key from <a href="https://console.anthropic.com" target="_blank" style="color:var(--blue)">console.anthropic.com</a>.</div>`;
+    return;
+  }
+
+  const c=gc(cid);
+  const today=new Date().toISOString().slice(0,10);
+  const in7Days=new Date(Date.now()+7*24*60*60*1000).toISOString().slice(0,10);
+
+  const prompt=`You are an operations consultant assistant for Audrain Advising.
+Analyze this meeting transcript with ${c?.name||'a client'} (${c?.service_type||'consulting'}).
+Today: ${today}. Task due dates must be between ${today} and ${in7Days}.
+
+Return ONLY this JSON:
+{
+  "meetingNotes": {
+    "summary": "2-3 sentence summary",
+    "keyDecisions": ["decision 1"],
+    "keyDiscussions": ["topic 1", "topic 2"],
+    "wins": ["positive 1"],
+    "concerns": ["concern 1"]
+  },
+  "tasks": [
+    { "title": "Verb-led task title", "description": "context", "priority": "high|med|low", "dueDate": "YYYY-MM-DD" }
+  ]
+}
+Rules: Extract only concrete actions. Start task titles with a verb. Return ONLY JSON.
+
+Transcript:
+${text.slice(0,8000)}`;
+
+  let meetingNotes, tasks=[];
+  try{
+    const aiRes=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':anthropicKey,'anthropic-version':'2023-06-01'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,messages:[{role:'user',content:prompt}]})
+    });
+    if(!aiRes.ok){
+      const err=await aiRes.json();
+      throw new Error(err.error?.message||'Anthropic API error');
+    }
+    const aiData=await aiRes.json();
+    const raw=aiData.content[0]?.text||'';
+    const parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());
+    meetingNotes=parsed.meetingNotes;
+    tasks=parsed.tasks||[];
+  }catch(err){
+    btn.disabled=false;btn.textContent='✨ Generate notes + tasks';
+    statusEl.innerHTML=`<div class="hint" style="background:var(--rl);border-color:var(--red);color:var(--red)">Error: ${err.message}</div>`;
+    return;
+  }
+
+  // Save meeting notes to Supabase
+  const{data:savedNote}=await sb.from('meeting_notes').insert({
+    client_id:cid||null, meeting_id:mid||null,
+    transcript_raw:text, notes_generated:JSON.stringify(meetingNotes),
+    source:'paste', created_by:currentUser.id
+  }).select().single();
+
+  // Create tasks in Supabase
+  const createdTasks=[];
+  for(const task of tasks){
+    const{data:t}=await sb.from('tasks').insert({
+      title:task.title, client_id:cid||null, assignee_id:currentUser.id,
+      due_date:task.dueDate||in7Days, priority:task.priority||'med',
+      status:'todo', notes:task.description||null, source:'transcript', created_by:currentUser.id
+    }).select().single();
+    if(t)createdTasks.push(t);
+  }
+
+  await sb.from('activity_log').insert({
+    type:'transcript',title:`Meeting notes — ${c?.name||'Client'}`,
+    subtitle:`${createdTasks.length} tasks created`,client_id:cid||null,user_id:currentUser.id
+  });
+
+  const result={meetingNotes,tasksCreated:createdTasks.length,tasks:createdTasks};
   btn.disabled=false;btn.textContent='✨ Generate notes + tasks';
-  if(!result){statusEl.innerHTML='<div class="hint" style="background:var(--rl);border-color:var(--red);color:var(--red)">Failed to process transcript. Check your backend connection.</div>';return;}
   statusEl.innerHTML='';
 
-  const{meetingNotes,tasksCreated,tasks}=result;
+  const{meetingNotes:mn,tasksCreated,tasks:ct}=result;
   const c=gc(cid);
 
   // Show results
@@ -1643,15 +1730,15 @@ async function processTranscript(){
     <div class="hint ok">✓ Processed successfully — ${tasksCreated} task${tasksCreated!==1?'s':''} created${c?' for '+c.name:''}</div>
     <div class="card" style="margin-bottom:16px">
       <div class="st" style="margin-bottom:12px">Meeting notes</div>
-      <div class="notes-section"><div class="notes-section-title">Summary</div><div style="font-size:13px;line-height:1.6">${meetingNotes?.summary||''}</div></div>
-      ${meetingNotes?.keyDecisions?.length?`<div class="notes-section"><div class="notes-section-title">Key decisions</div><ul class="notes-list">${meetingNotes.keyDecisions.map(d=>`<li>${d}</li>`).join('')}</ul></div>`:''}
-      ${meetingNotes?.keyDiscussions?.length?`<div class="notes-section"><div class="notes-section-title">Discussion points</div><ul class="notes-list">${meetingNotes.keyDiscussions.map(d=>`<li>${d}</li>`).join('')}</ul></div>`:''}
-      ${meetingNotes?.wins?.length?`<div class="notes-section"><div class="notes-section-title" style="color:var(--teal)">Wins</div><ul class="notes-list">${meetingNotes.wins.map(d=>`<li>${d}</li>`).join('')}</ul></div>`:''}
-      ${meetingNotes?.concerns?.length?`<div class="notes-section"><div class="notes-section-title" style="color:var(--amber)">Concerns</div><ul class="notes-list">${meetingNotes.concerns.map(d=>`<li>${d}</li>`).join('')}</ul></div>`:''}
+      <div class="notes-section"><div class="notes-section-title">Summary</div><div style="font-size:13px;line-height:1.6">${mn?.summary||''}</div></div>
+      ${mn?.keyDecisions?.length?`<div class="notes-section"><div class="notes-section-title">Key decisions</div><ul class="notes-list">${mn.keyDecisions.map(d=>`<li>${d}</li>`).join('')}</ul></div>`:''}
+      ${mn?.keyDiscussions?.length?`<div class="notes-section"><div class="notes-section-title">Discussion points</div><ul class="notes-list">${mn.keyDiscussions.map(d=>`<li>${d}</li>`).join('')}</ul></div>`:''}
+      ${mn?.wins?.length?`<div class="notes-section"><div class="notes-section-title" style="color:var(--teal)">Wins</div><ul class="notes-list">${mn.wins.map(d=>`<li>${d}</li>`).join('')}</ul></div>`:''}
+      ${mn?.concerns?.length?`<div class="notes-section"><div class="notes-section-title" style="color:var(--amber)">Concerns</div><ul class="notes-list">${mn.concerns.map(d=>`<li>${d}</li>`).join('')}</ul></div>`:''}
     </div>
     <div class="card">
       <div class="st" style="margin-bottom:12px">Tasks created (${tasksCreated})</div>
-      <div class="tlist">${(tasks||[]).map(taskHTML).join('')||'<div class="empty">No tasks extracted</div>'}</div>
+      <div class="tlist">${(ct||[]).map(taskHTML).join('')||'<div class="empty">No tasks extracted</div>'}</div>
     </div>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn sm p" onclick="navTo('tasks',null)">View all tasks →</button>
@@ -1681,6 +1768,16 @@ async function loadTranscriptHistory(){
 }
 
 // ── Settings ──
+async function saveAnthropicKey(){
+  const key=document.getElementById('anthropic-key-input').value.trim();
+  if(!key){toast('Please enter your API key','err');return;}
+  const{error}=await sb.from('settings').upsert({key:'anthropic_api_key',value:key,updated_by:currentUser.id});
+  if(error){toast('Failed to save','err');return;}
+  appSettings['anthropic_api_key']=key;
+  document.getElementById('anthropic-key-status').innerHTML='<div class="hint ok" style="margin-bottom:10px">✓ API key saved — transcript processing active</div>';
+  toast('Anthropic API key saved ✓','ok');
+}
+
 async function renderSettings(){
   const{data:profiles}=await sb.from('profiles').select('*').order('full_name');
   document.getElementById('team-list').innerHTML=(profiles||[]).map(p=>`
@@ -1692,6 +1789,15 @@ async function renderSettings(){
 
   const{data:googleToken}=await sb.from('google_tokens').select('id').eq('user_id',currentUser.id).single();
   const googleConnected=!!googleToken;
+
+  // Load Anthropic key
+  const anthropicKey=appSettings['anthropic_api_key']||'';
+  const akInput=document.getElementById('anthropic-key-input');
+  const akStatus=document.getElementById('anthropic-key-status');
+  if(akInput)akInput.value=anthropicKey?'••••••••••••••••••••••':'' ;
+  if(akStatus)akStatus.innerHTML=anthropicKey
+    ?'<div class="hint ok" style="margin-bottom:10px">✓ API key saved — transcript processing active</div>'
+    :'<div class="hint warn" style="margin-bottom:10px">No API key — paste your key below to enable transcript processing</div>';
 
   document.getElementById('integ-list').innerHTML=[
     {name:'Google (Calendar + Gmail + Drive)',desc:googleConnected?'Connected — syncing all Google services':'Not connected — click to authorize',ok:googleConnected,action:googleConnected?null:`connectGoogle()`},
