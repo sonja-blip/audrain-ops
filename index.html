@@ -1718,11 +1718,12 @@ ${text.slice(0,8000)}`;
     subtitle:`${createdTasks.length} tasks created`,client_id:cid||null,user_id:currentUser.id
   });
 
-  const result={meetingNotes,tasksCreated:createdTasks.length,tasks:createdTasks};
   btn.disabled=false;btn.textContent='✨ Generate notes + tasks';
   statusEl.innerHTML='';
 
-  const{meetingNotes:mn,tasksCreated,tasks:ct}=result;
+  const mn=meetingNotes;
+  const tasksCreated=createdTasks.length;
+  const ct=createdTasks;
 
   // Show results
   document.getElementById('tr-results').innerHTML=`
