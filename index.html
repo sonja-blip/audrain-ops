@@ -1384,14 +1384,14 @@ async function approveAgendaSave(cid){
 
   // First try in-memory cache, then fall back to a live DB query so we
   // always catch meetings added after the last full data load.
-  let mtg = allMeetings.find(m=>m.client_id===cid && m.status==='scheduled' && m.meeting_date >= new Date().toISOString().slice(0,10));
+  const today = new Date().toISOString().slice(0,10);
+  let mtg = allMeetings.find(m=>m.client_id===cid && (m.status==='scheduled'||!m.status) && m.meeting_date >= today);
   if(!mtg){
-    const today = new Date().toISOString().slice(0,10);
     const{data:fresh}=await sb.from('meetings')
       .select('*')
       .eq('client_id',cid)
-      .eq('status','scheduled')
       .gte('meeting_date',today)
+      .or('status.eq.scheduled,status.is.null')
       .order('meeting_date',{ascending:true})
       .limit(1);
     if(fresh && fresh.length>0){
@@ -1412,7 +1412,7 @@ async function approveAgendaSave(cid){
 async function addMeeting(){
   const client=document.getElementById('nm-client').value;
   if(!client){toast('Please select a client','err');return;}
-  const{data,error}=await sb.from('meetings').insert({client_id:client,meeting_date:document.getElementById('nm-date').value,meeting_type:document.getElementById('nm-type').value,created_by:currentUser.id}).select().single();
+  const{data,error}=await sb.from('meetings').insert({client_id:client,meeting_date:document.getElementById('nm-date').value,meeting_type:document.getElementById('nm-type').value,status:'scheduled',created_by:currentUser.id}).select().single();
   if(error){toast('Failed: '+error.message,'err');return;}
   allMeetings.push(data);
   closeM('newMeeting'); toast('Meeting scheduled ✓','ok');
