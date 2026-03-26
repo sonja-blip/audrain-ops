@@ -1381,8 +1381,27 @@ async function approveAgendaSave(cid){
   const checkboxes=document.querySelectorAll('#wf-step2 .agcb');
   const texts=document.querySelectorAll('#wf-step2 .agtx');
   const approved=[...checkboxes].map((cb,i)=>cb.checked?texts[i]?.textContent:'').filter(Boolean);
-  const mtg=allMeetings.find(m=>m.client_id===cid&&m.status==='scheduled');
-  if(!mtg){toast('No upcoming meeting found for this client','err');return;}
+
+  // First try in-memory cache, then fall back to a live DB query so we
+  // always catch meetings added after the last full data load.
+  let mtg = allMeetings.find(m=>m.client_id===cid && m.status==='scheduled' && m.meeting_date >= new Date().toISOString().slice(0,10));
+  if(!mtg){
+    const today = new Date().toISOString().slice(0,10);
+    const{data:fresh}=await sb.from('meetings')
+      .select('*')
+      .eq('client_id',cid)
+      .eq('status','scheduled')
+      .gte('meeting_date',today)
+      .order('meeting_date',{ascending:true})
+      .limit(1);
+    if(fresh && fresh.length>0){
+      mtg=fresh[0];
+      // Sync back into cache so the rest of the UI stays consistent
+      if(!allMeetings.find(x=>x.id===mtg.id)) allMeetings.push(mtg);
+    }
+  }
+
+  if(!mtg){toast('No upcoming meeting found for this client — please add a meeting first','err');return;}
   const result=await callBackend('/drive/create-agenda','POST',{clientId:cid,meetingId:mtg.id,agendaItems:approved});
   if(!result)return;
   toast('Agenda approved and saved to Drive ✓','ok');
